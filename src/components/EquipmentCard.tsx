@@ -1,6 +1,7 @@
 import Image from "next/image";
 import { Heart, MapPin, Star } from "lucide-react";
 import type { Equipment } from "@/data/marketplace";
+import { getEquipmentImageSrc } from "@/lib/images";
 
 type EquipmentCardProps = {
   item: Equipment;
@@ -23,7 +24,7 @@ export default function EquipmentCard({
           className="image-cover transition-transform duration-700 group-hover:scale-[1.04]"
           fill
           sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 380px"
-          src={item.image}
+          src={getEquipmentImageSrc(item.image)}
         />
         <span className="absolute left-3.5 top-3.5 rounded-full border border-white/70 bg-white/90 px-3 py-1.5 text-[10px] font-semibold text-[#385a40] shadow-sm backdrop-blur">
           {item.availability}
