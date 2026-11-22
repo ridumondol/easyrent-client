@@ -160,3 +160,7 @@ Rentora is an equipment rental marketplace built with Next.js and React.
 1. Clone the repository.
 2. Run npm install.
 3. Run npm run dev.
+
+## Usage
+
+Users can browse equipment, book rental items, and manage their rental activities.
