@@ -50,7 +50,9 @@ NEXT_PUBLIC_GOOGLE_CLIENT_ID=your_google_oauth_client_id
 
 > **Important**: Next.js inlines `NEXT_PUBLIC_*` variables at build time and on dev server initialization. The Next.js development server (`npm run dev`) must be restarted whenever any `NEXT_PUBLIC_*` variable is added, removed, or modified in `.env.local`.
 
-The client also lists the requested Better Auth, MongoDB, and imgbb placeholders in `.env.example`; server-side authentication and equipment image URLs are provided through the Rentora Express API.
+Only browser-safe `NEXT_PUBLIC_*` settings belong in the client environment.
+Keep MongoDB, JWT, Stripe, SMTP, and OAuth client secrets in the API server's
+private environment.
 
 ## Production Configuration & Deployment
 
@@ -59,37 +61,57 @@ The client also lists the requested Better Auth, MongoDB, and imgbb placeholders
 When deploying the frontend (e.g., on Vercel) and the backend API (e.g., on Render, Railway, or Heroku):
 
 1. **Client Deployment (Vercel)**:
+   - Set the Vercel project **Root Directory** to `rentora-client`.
    - In your Vercel Project Settings > **Environment Variables**, set:
      ```env
      NEXT_PUBLIC_API_URL=https://your-rentora-api.onrender.com/api
      NEXT_PUBLIC_GOOGLE_CLIENT_ID=your_google_oauth_client_id
+     NEXT_PUBLIC_GITHUB_CLIENT_ID=your_github_oauth_client_id
      ```
    - **Crucial**: Whenever `NEXT_PUBLIC_*` environment variables are added or changed in Vercel, you **must trigger a new deployment** (redeploy without cache). Because Next.js statically inlines `NEXT_PUBLIC_*` variables into the JavaScript bundle during compilation, changing environment variables on Vercel without redeploying will not update the live client bundle.
 
 2. **Server Deployment (Render / Railway / Heroku)**:
+   - The repository-root `render.yaml` configures the API service with
+     `rentora-server` as its root directory and `/api/health` as its health
+     check. The secret values are intentionally left for you to set in Render.
    - Set the following backend environment variables:
      ```env
-     PORT=5000
      CLIENT_URL=https://your-rentora-client.vercel.app
-     CORS_ORIGIN=https://your-rentora-client.vercel.app
+     CORS_ORIGIN=https://your-rentora-client.vercel.app,https://your-preview-domain.vercel.app
      MONGODB_URI=your_production_mongodb_connection_string
      MONGODB_DB_NAME=rentora
      JWT_SECRET=your_production_jwt_secret
+     STRIPE_SECRET_KEY=sk_test_your_stripe_test_secret_key
+     STRIPE_WEBHOOK_SECRET=your_stripe_webhook_secret
+     STRIPE_CURRENCY=bdt
      SMTP_HOST=your_smtp_host
      SMTP_PORT=587
      SMTP_USER=your_smtp_username
      SMTP_PASS=your_provider_issued_smtp_password
      EMAIL_FROM=Rentora <noreply@your-domain.example>
      ```
-   - Use the actual HTTPS API origin for `NEXT_PUBLIC_API_URL` (including `/api`),
-     and configure SMTP values from your mail provider. `EMAIL_FROM` must be a
+   - `CLIENT_URL` is the canonical frontend URL used for redirects and reset
+     links. `CORS_ORIGIN` accepts additional comma-separated browser origins.
+     Render supplies `PORT` automatically. Use the actual HTTPS API origin for
+     `NEXT_PUBLIC_API_URL` (including `/api`) and configure SMTP values from your
+     mail provider. `EMAIL_FROM` must be a
      sender authorized by that provider. Keep these SMTP credentials in the
      backend environment, never in `NEXT_PUBLIC_*` variables.
+   - Use a Stripe **test-mode** secret key (`sk_test_...`). The API rejects
+     live-mode keys. Configure Stripe to send
+     `checkout.session.completed`, `checkout.session.expired`,
+     `checkout.session.async_payment_succeeded`, and
+     `checkout.session.async_payment_failed` events to
+     `https://your-rentora-api.onrender.com/api/payments/webhook`.
+   - In Stripe test mode, create a Checkout session from a pending booking and
+     complete it with the standard test card `4242 4242 4242 4242`, any future
+     expiry date, and any CVC. Confirm the signed webhook changes that booking
+     to `paid`; use the Stripe CLI to forward signed events when testing locally.
 
 ### Verifying the Production Connection
 
 To verify that the client and server communicate properly in production:
-1. Open the backend health endpoint directly in the browser: `https://your-rentora-api.onrender.com/api/health`. It must return `{"success": true, "message": "Server is healthy", ...}` with HTTP status `200 OK`.
+1. Open the backend health endpoint directly in the browser: `https://your-rentora-api.onrender.com/api/health`. It should return HTTP `200` with `success: true`, `data.status: "running"`, and `data.database: "connected"`.
 2. Open the frontend URL: `https://your-rentora-client.vercel.app`. Verify the Featured Equipment and Customer Reviews load live data without error banners or fallback indicators.
 3. Open Browser DevTools > Console and Network tabs to verify requests to `/api/equipment` and `/api/reviews` return status `200` with the correct CORS headers (`Access-Control-Allow-Origin`).
 
