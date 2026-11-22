@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="840" viewBox="0 0 1200 840" fill="none">
+  <rect width="1200" height="840" fill="#E8EEE8"/>
+  <circle cx="600" cy="390" r="178" fill="#D6E2D7"/>
+  <path d="M491 351.5 600 292l109 59.5v115L600 526l-109-59.5v-115Z" stroke="#42614B" stroke-width="20" stroke-linejoin="round"/>
+  <path d="m493 354 107 60 107-60M600 414v109" stroke="#42614B" stroke-width="20" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="600" y="650" fill="#42614B" font-family="Arial,sans-serif" font-size="32" font-weight="600" text-anchor="middle">Equipment image unavailable</text>
+</svg>
