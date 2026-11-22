@@ -143,3 +143,7 @@ npm run build
 
 Run npm install to install dependencies.
 Run npm run dev to start the development server.
+
+## Project Information
+
+Rentora is an equipment rental marketplace built with Next.js and React.
