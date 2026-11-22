@@ -128,3 +128,13 @@ Run in **Terminal: client**, working folder `rentora-client`:
 npm run lint
 npm run build
 ```
+
+
+## Features
+- User Authentication
+- Equipment Marketplace
+- Customer Dashboard
+- Owner Dashboard
+- Admin Dashboard
+- Equipment Booking
+- Payment Management
