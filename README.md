@@ -147,3 +147,10 @@ Run npm run dev to start the development server.
 ## Project Information
 
 Rentora is an equipment rental marketplace built with Next.js and React.
+
+## Technologies Used
+
+- Next.js
+- React
+- TypeScript
+- Tailwind CSS
