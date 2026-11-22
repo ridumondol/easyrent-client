@@ -10,10 +10,10 @@ import {
 import Brand from "@/components/Brand";
 
 const footerLinks = [
-  { label: "Browse equipment", href: "#featured" },
-  { label: "Categories", href: "#categories" },
-  { label: "How it works", href: "#how-it-works" },
-  { label: "List your equipment", href: "#list-equipment" },
+  { label: "Browse equipment", href: "/equipment" },
+  { label: "About us", href: "/about" },
+  { label: "How it works", href: "/how-it-works" },
+  { label: "List your equipment", href: "/register" },
 ];
 
 const categoryLinks = [
@@ -34,6 +34,17 @@ export default function Footer() {
             equipment that keep your next idea moving.
           </p>
           <div className="mt-6 flex items-center gap-2.5">
+            <a
+              aria-label="Rentora on X"
+              className="grid size-9 place-items-center rounded-full border border-white/15 text-white/70 transition-colors hover:border-[#f26a3d] hover:text-white"
+              href="https://x.com/"
+              rel="noreferrer"
+              target="_blank"
+            >
+              <svg className="size-3.5 fill-current" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+              </svg>
+            </a>
             <a
               aria-label="Rentora on Instagram"
               className="grid size-9 place-items-center rounded-full border border-white/15 text-white/70 transition-colors hover:border-[#f26a3d] hover:text-white"
@@ -76,7 +87,7 @@ export default function Footer() {
               <li key={category}>
                 <Link
                   className="text-sm text-white/55 transition-colors hover:text-white"
-                  href="#categories"
+                  href={`/equipment?category=${category.toLowerCase()}`}
                 >
                   {category}
                 </Link>
@@ -104,12 +115,12 @@ export default function Footer() {
               Austin, Texas
             </li>
           </ul>
-          <a
+          <Link
             className="mt-5 inline-flex items-center gap-1 text-xs font-semibold text-white/75 transition-colors hover:text-white"
-            href="mailto:hello@rentora.com"
+            href="/contact"
           >
             Talk to our team <ArrowUpRight size={14} />
-          </a>
+          </Link>
         </div>
       </div>
       <div className="border-t border-white/10">
