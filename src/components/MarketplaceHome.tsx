@@ -2,7 +2,8 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useMemo, useState, type FormEvent } from "react";
+import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react";
+import { useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   ArrowDownRight,
@@ -28,7 +29,10 @@ import toast, { Toaster } from "react-hot-toast";
 import CategoryCard from "@/components/CategoryCard";
 import EquipmentCard from "@/components/EquipmentCard";
 import SectionHeading from "@/components/SectionHeading";
-import { categories, equipment, reviews, type Equipment } from "@/data/marketplace";
+import { useAuth } from "@/components/auth/AuthProvider";
+import { categories, type Equipment } from "@/data/marketplace";
+import { apiRequest, getErrorMessage, type User } from "@/lib/api";
+import { getEquipmentImageSrc } from "@/lib/images";
 
 const benefits = [
   {
@@ -84,10 +88,105 @@ const steps = [
 function EquipmentDialog({
   item,
   onClose,
+  user,
+  token,
 }: {
   item: Equipment;
   onClose: () => void;
+  user: User | null;
+  token: string | null;
 }) {
+  const router = useRouter();
+  const [bookingMode, setBookingMode] = useState(false);
+  const [startDate, setStartDate] = useState(() => {
+    const d = new Date();
+    d.setDate(d.getDate() + 1);
+    return d.toISOString().slice(0, 10);
+  });
+  const [endDate, setEndDate] = useState(() => {
+    const d = new Date();
+    d.setDate(d.getDate() + 4);
+    return d.toISOString().slice(0, 10);
+  });
+  const [quantity, setQuantity] = useState(1);
+  const [phone, setPhone] = useState("");
+  const [address, setAddress] = useState("");
+  const [notes, setNotes] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [formError, setFormError] = useState("");
+  const [availabilityNote, setAvailabilityNote] = useState("");
+  const [checkingAvailability, setCheckingAvailability] = useState(false);
+
+  const totalDays = useMemo(() => {
+    if (!startDate || !endDate) return 1;
+    const s = new Date(startDate);
+    const e = new Date(endDate);
+    const diff = Math.round((e.getTime() - s.getTime()) / (1000 * 60 * 60 * 24));
+    return diff > 0 ? diff : 1;
+  }, [startDate, endDate]);
+
+  const estimatedTotal = item.dailyRate * quantity * totalDays;
+
+  async function checkAvailability() {
+    setCheckingAvailability(true);
+    setAvailabilityNote("");
+    setFormError("");
+    try {
+      const res = await apiRequest<{
+        isAvailable: boolean;
+        availableQuantity: number;
+        stock: number;
+      }>(
+        `/bookings/availability?equipmentId=${item.id}&startDate=${startDate}&endDate=${endDate}&quantity=${quantity}`,
+      );
+      if (res.isAvailable) {
+        setAvailabilityNote(`Available! ${res.availableQuantity} of ${res.stock} unit(s) open for these dates.`);
+      } else {
+        setAvailabilityNote(`Unavailable: Only ${res.availableQuantity} of ${res.stock} unit(s) open for these dates.`);
+      }
+    } catch (err) {
+      setAvailabilityNote(getErrorMessage(err));
+    } finally {
+      setCheckingAvailability(false);
+    }
+  }
+
+  async function handleBookingSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!user) {
+      router.push(`/login?next=/equipment/${item.id}&reason=equipment`);
+      return;
+    }
+    if (user.role !== "renter") {
+      setFormError("Only customer/renter accounts can create bookings. Please sign in with a renter account.");
+      return;
+    }
+    setSubmitting(true);
+    setFormError("");
+    try {
+      await apiRequest("/bookings", {
+        method: "POST",
+        token,
+        body: {
+          equipmentId: item.id,
+          startDate,
+          endDate,
+          quantity,
+          phone,
+          address,
+          notes,
+        },
+      });
+      toast.success("Rental request submitted successfully!");
+      onClose();
+      router.push("/customer/bookings");
+    } catch (err) {
+      setFormError(getErrorMessage(err));
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
   return (
     <div
       className="fixed inset-0 z-[70] flex items-center justify-center bg-[#101d17]/60 p-4 backdrop-blur-sm"
@@ -109,7 +208,7 @@ function EquipmentDialog({
             className="image-cover"
             fill
             sizes="(max-width: 640px) 100vw, 576px"
-            src={item.image}
+            src={getEquipmentImageSrc(item.image)}
           />
           <button
             aria-label="Close equipment details"
@@ -143,49 +242,373 @@ function EquipmentDialog({
           <p className="mt-4 text-sm leading-6 text-[#68756d]">
             {item.description}
           </p>
-          <div className="mt-6 flex flex-col gap-4 border-t border-[#edf0ec] pt-5 sm:flex-row sm:items-center sm:justify-between">
-            <p className="text-xl font-semibold text-[#17271f]">
-              ${item.dailyRate}
-              <span className="ml-1 text-sm font-normal text-[#77827a]">
-                / day
-              </span>
-            </p>
-            <button
-              className="rounded-full bg-[#f26a3d] px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-[#df5832]"
-              onClick={() => {
-                toast("Booking requests are coming soon.");
-                onClose();
-              }}
-              type="button"
-            >
-              Check availability
-            </button>
-          </div>
-          <p className="mt-4 text-xs text-[#89938c]">
-            Listed by {item.owner} · {item.availability.toLowerCase()}
-          </p>
+
+          {!bookingMode ? (
+            <>
+              <div className="mt-6 flex flex-col gap-4 border-t border-[#edf0ec] pt-5 sm:flex-row sm:items-center sm:justify-between">
+                <p className="text-xl font-semibold text-[#17271f]">
+                  ${item.dailyRate}
+                  <span className="ml-1 text-sm font-normal text-[#77827a]">
+                    / day
+                  </span>
+                </p>
+                <button
+                  className="inline-flex items-center gap-2 rounded-full bg-[#f26a3d] px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-[#df5832]"
+                  onClick={() => setBookingMode(true)}
+                  type="button"
+                >
+                  <CalendarDays size={16} /> Request rental
+                </button>
+              </div>
+              <p className="mt-4 text-xs text-[#89938c]">
+                Listed by {item.owner} · {item.availability.toLowerCase()}
+              </p>
+            </>
+          ) : (
+            <div className="mt-6 border-t border-[#edf0ec] pt-5">
+              <h3 className="text-base font-semibold text-[#17271f]">Book this equipment</h3>
+              <p className="mt-1 text-xs text-[#818c84]">
+                Specify your rental dates and delivery details to request a booking.
+              </p>
+
+              {!user ? (
+                <div className="mt-4 rounded-2xl bg-[#f7f8f6] p-5 text-center">
+                  <p className="text-sm font-medium text-[#26352c]">
+                    Sign in with a customer/renter account to book this equipment.
+                  </p>
+                  <Link
+                    className="mt-4 inline-flex items-center gap-2 rounded-full bg-[#14251e] px-5 py-2.5 text-xs font-semibold text-white"
+                    href="/login"
+                  >
+                    Sign in to book <ArrowRight size={14} />
+                  </Link>
+                </div>
+              ) : user.role !== "renter" ? (
+                <div className="mt-4 rounded-2xl bg-[#fff7f4] p-4 text-xs text-[#a14630]">
+                  You are currently signed in as an {user.role}. Bookings can only be created by customer/renter accounts.
+                </div>
+              ) : (
+                <form className="mt-4 space-y-4" onSubmit={handleBookingSubmit}>
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <label>
+                      <span className="text-xs font-semibold text-[#34483b]">Start date</span>
+                      <input
+                        className="mt-1.5 w-full rounded-xl border border-[#dfe5df] px-3.5 py-2.5 text-sm outline-none focus:border-[#718b78]"
+                        min={new Date().toISOString().slice(0, 10)}
+                        onChange={(e) => setStartDate(e.target.value)}
+                        required
+                        type="date"
+                        value={startDate}
+                      />
+                    </label>
+                    <label>
+                      <span className="text-xs font-semibold text-[#34483b]">End date</span>
+                      <input
+                        className="mt-1.5 w-full rounded-xl border border-[#dfe5df] px-3.5 py-2.5 text-sm outline-none focus:border-[#718b78]"
+                        min={startDate || new Date().toISOString().slice(0, 10)}
+                        onChange={(e) => setEndDate(e.target.value)}
+                        required
+                        type="date"
+                        value={endDate}
+                      />
+                    </label>
+                  </div>
+
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <label>
+                      <span className="text-xs font-semibold text-[#34483b]">Quantity</span>
+                      <input
+                        className="mt-1.5 w-full rounded-xl border border-[#dfe5df] px-3.5 py-2.5 text-sm outline-none focus:border-[#718b78]"
+                        min="1"
+                        onChange={(e) => setQuantity(Number(e.target.value))}
+                        required
+                        step="1"
+                        type="number"
+                        value={quantity}
+                      />
+                    </label>
+                    <label>
+                      <span className="text-xs font-semibold text-[#34483b]">Phone number</span>
+                      <input
+                        className="mt-1.5 w-full rounded-xl border border-[#dfe5df] px-3.5 py-2.5 text-sm outline-none focus:border-[#718b78]"
+                        onChange={(e) => setPhone(e.target.value)}
+                        placeholder="+8801700000000"
+                        required
+                        type="tel"
+                        value={phone}
+                      />
+                    </label>
+                  </div>
+
+                  <label className="block">
+                    <span className="text-xs font-semibold text-[#34483b]">Delivery / collection address</span>
+                    <input
+                      className="mt-1.5 w-full rounded-xl border border-[#dfe5df] px-3.5 py-2.5 text-sm outline-none focus:border-[#718b78]"
+                      onChange={(e) => setAddress(e.target.value)}
+                      placeholder="Street address, city"
+                      required
+                      value={address}
+                    />
+                  </label>
+
+                  <label className="block">
+                    <span className="text-xs font-semibold text-[#34483b]">Notes for owner (optional)</span>
+                    <textarea
+                      className="mt-1.5 min-h-16 w-full resize-y rounded-xl border border-[#dfe5df] px-3.5 py-2 text-sm outline-none focus:border-[#718b78]"
+                      onChange={(e) => setNotes(e.target.value)}
+                      placeholder="Delivery time preferences or job requirements"
+                      value={notes}
+                    />
+                  </label>
+
+                  <div className="rounded-xl bg-[#f7f8f6] p-3.5 text-xs">
+                    <div className="flex justify-between text-[#68756d]">
+                      <span>Rental calculation:</span>
+                      <span>${item.dailyRate} × {quantity} unit(s) × {totalDays} day(s)</span>
+                    </div>
+                    <div className="mt-2 flex justify-between border-t border-[#e8ebe7] pt-2 text-sm font-semibold text-[#17271f]">
+                      <span>Estimated total:</span>
+                      <span>${estimatedTotal.toFixed(2)}</span>
+                    </div>
+                  </div>
+
+                  {availabilityNote && (
+                    <p className="rounded-xl border border-[#dce9df] bg-[#f2f8f3] px-3.5 py-2.5 text-xs text-[#357148]">
+                      {availabilityNote}
+                    </p>
+                  )}
+
+                  {formError && (
+                    <p className="rounded-xl border border-[#f2d5cb] bg-[#fff7f4] px-3.5 py-2.5 text-xs text-[#a14630]">
+                      {formError}
+                    </p>
+                  )}
+
+                  <div className="flex flex-wrap items-center justify-between gap-2 pt-2">
+                    <button
+                      className="text-xs font-semibold text-[#536159] hover:text-[#17271f]"
+                      onClick={() => setBookingMode(false)}
+                      type="button"
+                    >
+                      ← Back to details
+                    </button>
+                    <div className="flex gap-2">
+                      <button
+                        className="rounded-full border border-[#dfe5df] px-4 py-2 text-xs font-semibold text-[#536159]"
+                        disabled={checkingAvailability}
+                        onClick={() => void checkAvailability()}
+                        type="button"
+                      >
+                        {checkingAvailability ? "Checking…" : "Check availability"}
+                      </button>
+                      <button
+                        className="rounded-full bg-[#14251e] px-5 py-2 text-xs font-semibold text-white disabled:opacity-50"
+                        disabled={submitting}
+                        type="submit"
+                      >
+                        {submitting ? "Submitting…" : "Submit request"}
+                      </button>
+                    </div>
+                  </div>
+                </form>
+              )}
+            </div>
+          )}
         </div>
       </motion.section>
     </div>
   );
 }
 
+type BackendEquipmentItem = {
+  _id: string;
+  title: string;
+  description: string;
+  category: string;
+  pricePerDay: number;
+  location: string;
+  image: string;
+  availability: boolean;
+  owner?: { name?: string };
+};
+
+type BackendReviewItem = {
+  _id: string;
+  rating: number;
+  comment: string;
+  createdAt: string;
+  customer?: {
+    name?: string;
+    image?: string;
+  };
+};
+
 export default function MarketplaceHome() {
+  const { user, token } = useAuth();
   const [query, setQuery] = useState("");
   const [location, setLocation] = useState("");
   const [submittedQuery, setSubmittedQuery] = useState("");
   const [submittedLocation, setSubmittedLocation] = useState("");
   const [activeCategory, setActiveCategory] = useState("");
   const [favorites, setFavorites] = useState<string[]>([]);
+
+  // Live Featured Equipment state
+  const [backendEquipment, setBackendEquipment] = useState<Equipment[]>([]);
+  const [loadingEquipment, setLoadingEquipment] = useState(true);
+  const [equipmentError, setEquipmentError] = useState("");
+
+  // Live Customer Reviews state
+  const [backendReviews, setBackendReviews] = useState<BackendReviewItem[]>([]);
+  const [loadingReviews, setLoadingReviews] = useState(true);
+  const [reviewsError, setReviewsError] = useState("");
+
   const [selectedEquipment, setSelectedEquipment] = useState<Equipment | null>(
     null,
   );
+  const router = useRouter();
+
+  function handleViewDetails(item: Equipment) {
+    if (!user) {
+      router.push(`/login?next=/equipment/${item.id}&reason=equipment`);
+    } else {
+      router.push(`/equipment/${item.id}`);
+    }
+  }
+
+  const retryEquipment = useCallback(() => {
+    setLoadingEquipment(true);
+    setEquipmentError("");
+    apiRequest<{ equipment: BackendEquipmentItem[] }>("/equipment?limit=6")
+      .then((res) => {
+        if (Array.isArray(res?.equipment)) {
+          const mapped: Equipment[] = res.equipment.map((item) => ({
+            id: item._id,
+            name: item.title,
+            category: item.category.charAt(0).toUpperCase() + item.category.slice(1),
+            location: item.location,
+            dailyRate: item.pricePerDay,
+            rating: 5.0,
+            reviewCount: 1,
+            image: item.image,
+            imageAlt: item.title,
+            availability: item.availability ? "Available today" : "Available this week",
+            owner: item.owner?.name ?? "Verified Owner",
+            description: item.description,
+          }));
+          setBackendEquipment(mapped);
+        } else {
+          setBackendEquipment([]);
+        }
+      })
+      .catch((requestError: unknown) => {
+        setBackendEquipment([]);
+        setEquipmentError(getErrorMessage(requestError));
+      })
+      .finally(() => {
+        setLoadingEquipment(false);
+      });
+  }, []);
+
+  const retryReviews = useCallback(() => {
+    setLoadingReviews(true);
+    setReviewsError("");
+    apiRequest<{ reviews: BackendReviewItem[] }>("/reviews?limit=4")
+      .then((res) => {
+        if (Array.isArray(res?.reviews)) {
+          setBackendReviews(res.reviews);
+        } else {
+          setBackendReviews([]);
+        }
+      })
+      .catch((requestError: unknown) => {
+        setBackendReviews([]);
+        setReviewsError(getErrorMessage(requestError));
+      })
+      .finally(() => {
+        setLoadingReviews(false);
+      });
+  }, []);
+
+  useEffect(() => {
+    let active = true;
+
+    apiRequest<{ equipment: BackendEquipmentItem[] }>("/equipment?limit=6")
+      .then((res) => {
+        if (active && Array.isArray(res?.equipment)) {
+          const mapped: Equipment[] = res.equipment.map((item) => ({
+            id: item._id,
+            name: item.title,
+            category: item.category.charAt(0).toUpperCase() + item.category.slice(1),
+            location: item.location,
+            dailyRate: item.pricePerDay,
+            rating: 5.0,
+            reviewCount: 1,
+            image: item.image,
+            imageAlt: item.title,
+            availability: item.availability ? "Available today" : "Available this week",
+            owner: item.owner?.name ?? "Verified Owner",
+            description: item.description,
+          }));
+          setBackendEquipment(mapped);
+          setEquipmentError("");
+        }
+      })
+      .catch((requestError: unknown) => {
+        if (active) {
+          setBackendEquipment([]);
+          setEquipmentError(getErrorMessage(requestError));
+        }
+      })
+      .finally(() => {
+        if (active) setLoadingEquipment(false);
+      });
+
+    apiRequest<{ reviews: BackendReviewItem[] }>("/reviews?limit=4")
+      .then((res) => {
+        if (active && Array.isArray(res?.reviews)) {
+          setBackendReviews(res.reviews);
+          setReviewsError("");
+        }
+      })
+      .catch((requestError: unknown) => {
+        if (active) {
+          setBackendReviews([]);
+          setReviewsError(getErrorMessage(requestError));
+        }
+      })
+      .finally(() => {
+        if (active) setLoadingReviews(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    let active = true;
+    if (!user || !token || user.role !== "renter") {
+      return () => { active = false; };
+    }
+
+    apiRequest<{ favorites: { equipmentId: string }[] }>("/favorites", { token })
+      .then(({ favorites: saved }) => {
+        if (active) setFavorites(saved.map((favorite) => String(favorite.equipmentId)));
+      })
+      .catch((requestError: unknown) => {
+        if (active) toast.error(getErrorMessage(requestError));
+      });
+
+    return () => { active = false; };
+  }, [token, user]);
+
+  const allEquipment = backendEquipment;
 
   const filteredEquipment = useMemo(() => {
     const searchTerm = submittedQuery.trim().toLowerCase();
     const locationTerm = submittedLocation.trim().toLowerCase();
 
-    return equipment.filter((item) => {
+    return allEquipment.filter((item) => {
       const matchesSearch =
         !searchTerm ||
         `${item.name} ${item.category} ${item.description}`
@@ -198,7 +621,7 @@ export default function MarketplaceHome() {
 
       return matchesSearch && matchesLocation && matchesCategory;
     });
-  }, [activeCategory, submittedLocation, submittedQuery]);
+  }, [activeCategory, allEquipment, submittedLocation, submittedQuery]);
 
   function handleSearch(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -214,13 +637,34 @@ export default function MarketplaceHome() {
     setSubmittedLocation("");
   }
 
-  function toggleFavorite(item: Equipment) {
+  async function toggleFavorite(item: Equipment) {
+    if (!user || !token) {
+      toast.error("Sign in as a customer to save equipment.");
+      router.push("/login");
+      return;
+    }
+    if (user.role !== "renter") {
+      toast.error("Favorites are available to customer accounts.");
+      return;
+    }
+    if (!/^[a-f\d]{24}$/i.test(item.id)) {
+      toast.error("Only active marketplace listings can be saved.");
+      return;
+    }
+
     const isSaved = favorites.includes(item.id);
-    setFavorites((current) =>
-      isSaved
+    try {
+      await apiRequest(`/favorites/${item.id}`, {
+        method: isSaved ? "DELETE" : "POST",
+        token,
+      });
+      setFavorites((current) => isSaved
         ? current.filter((favorite) => favorite !== item.id)
-        : [...current, item.id],
-    );
+        : [...current, item.id]);
+    } catch (requestError) {
+      toast.error(getErrorMessage(requestError));
+      return;
+    }
     toast.success(
       isSaved ? "Removed from your saved gear" : "Added to your saved gear",
     );
@@ -329,17 +773,25 @@ export default function MarketplaceHome() {
               </div>
               <div className="mt-9 flex items-center gap-4 border-t border-[#e8ebe7] pt-6">
                 <div className="flex -space-x-2.5" aria-hidden="true">
-                  {reviews.slice(0, 3).map((review) => (
+                  {(backendReviews.length > 0 ? backendReviews.slice(0, 3) : [0, 1, 2]).map((review, i) => (
                     <span
                       className="relative size-9 overflow-hidden rounded-full border-[2px] border-[#f7f8f6] bg-[#e9ede8]"
-                      key={review.name}
+                      key={typeof review === "object" ? review._id : i}
                     >
                       <Image
                         alt=""
                         className="image-cover"
                         fill
                         sizes="36px"
-                        src={review.avatar}
+                        src={
+                          typeof review === "object" && review.customer?.image
+                            ? review.customer.image
+                            : [
+                                "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=160&q=85",
+                                "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=160&q=85",
+                                "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=160&q=85",
+                              ][i]
+                        }
                       />
                     </span>
                   ))}
@@ -520,8 +972,27 @@ export default function MarketplaceHome() {
                 Reset filters <ChevronDown size={13} className="rotate-180" />
               </button>
             </div>
+
+            {equipmentError && (
+              <div
+                className="mt-6 rounded-2xl border border-[#f2d5cb] bg-[#fff7f4] p-6 text-center"
+                role="alert"
+              >
+                <p className="text-sm font-semibold text-[#a14630]">
+                  Unable to load equipment listings
+                </p>
+                <p className="mt-1 text-xs text-[#b85c47]">{equipmentError}</p>
+                <button
+                  type="button"
+                  onClick={retryEquipment}
+                  className="mt-4 inline-flex items-center gap-1.5 rounded-full bg-[#14251e] px-4 py-2 text-xs font-semibold text-white transition hover:bg-[#263b31]"
+                >
+                  Try again
+                </button>
+              </div>
+            )}
           </div>
-          {(activeCategory || submittedQuery || submittedLocation) && (
+          {(activeCategory || submittedQuery || submittedLocation) && !loadingEquipment && !equipmentError && (
             <p className="mt-5 text-sm text-[#77827a]" aria-live="polite">
               {filteredEquipment.length}{" "}
               {filteredEquipment.length === 1 ? "listing" : "listings"} found
@@ -530,7 +1001,24 @@ export default function MarketplaceHome() {
               {submittedQuery ? ` for “${submittedQuery}”` : ""}
             </p>
           )}
-          {filteredEquipment.length > 0 ? (
+          {loadingEquipment ? (
+            <div className="mt-7 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 lg:gap-5">
+              {[0, 1, 2, 3, 4, 5].map((i) => (
+                <div
+                  key={i}
+                  className="animate-pulse rounded-[22px] border border-[#e8ebe7] bg-white p-4"
+                >
+                  <div className="aspect-[4/3] w-full rounded-2xl bg-[#eef1ed]" />
+                  <div className="mt-4 h-4 w-3/4 rounded bg-[#eef1ed]" />
+                  <div className="mt-2 h-3 w-1/2 rounded bg-[#eef1ed]" />
+                  <div className="mt-4 flex items-center justify-between border-t border-[#f0f2ef] pt-3">
+                    <div className="h-5 w-20 rounded bg-[#eef1ed]" />
+                    <div className="h-4 w-16 rounded bg-[#eef1ed]" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : !equipmentError && filteredEquipment.length > 0 ? (
             <div className="mt-7 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 lg:gap-5">
               {filteredEquipment.map((item, index) => (
                 <motion.div
@@ -541,40 +1029,46 @@ export default function MarketplaceHome() {
                   viewport={{ once: true, amount: 0.15 }}
                 >
                   <EquipmentCard
-                    isFavorite={favorites.includes(item.id)}
+                    isFavorite={user?.role === "renter" && favorites.includes(item.id)}
                     item={item}
-                    onToggleFavorite={toggleFavorite}
-                    onViewDetails={setSelectedEquipment}
+                    onToggleFavorite={(item) => void toggleFavorite(item)}
+                    onViewDetails={handleViewDetails}
                   />
                 </motion.div>
               ))}
             </div>
-          ) : (
+          ) : !equipmentError && filteredEquipment.length === 0 ? (
             <div className="mt-7 rounded-3xl border border-dashed border-[#d9e0d9] bg-white px-6 py-14 text-center">
               <span className="mx-auto grid size-12 place-items-center rounded-2xl bg-[#f3f5f2] text-[#65736a]">
                 <Search size={21} />
               </span>
               <h3 className="mt-4 text-lg font-semibold text-[#17271f]">
-                No exact matches just yet
+                {backendEquipment.length === 0
+                  ? "No approved equipment available yet"
+                  : "No exact matches just yet"}
               </h3>
               <p className="mt-2 text-sm text-[#77827a]">
-                Try a nearby city or a broader equipment search.
+                {backendEquipment.length === 0
+                  ? "Owners are currently adding new listings. Please check back soon or browse other categories."
+                  : "Try a nearby city or a broader equipment search."}
               </p>
-              <button
-                className="mt-5 text-sm font-semibold text-[#f26a3d] hover:text-[#d95530]"
-                onClick={() => {
-                  setQuery("");
-                  setLocation("");
-                  setSubmittedQuery("");
-                  setSubmittedLocation("");
-                  setActiveCategory("");
-                }}
-                type="button"
-              >
-                Clear filters
-              </button>
+              {(activeCategory || submittedQuery || submittedLocation) && (
+                <button
+                  className="mt-5 text-sm font-semibold text-[#f26a3d] hover:text-[#d95530]"
+                  onClick={() => {
+                    setQuery("");
+                    setLocation("");
+                    setSubmittedQuery("");
+                    setSubmittedLocation("");
+                    setActiveCategory("");
+                  }}
+                  type="button"
+                >
+                  Clear filters
+                </button>
+              )}
             </div>
-          )}
+          ) : null}
         </section>
 
         <section
@@ -713,14 +1207,14 @@ export default function MarketplaceHome() {
               </Link>
             </div>
             <div className="grid gap-3 sm:grid-cols-3">
-              {[equipment[0], equipment[3], equipment[1]].map(
+              {backendEquipment.slice(0, 3).map(
                 (item, index) => (
                   <motion.button
                     className={`group overflow-hidden rounded-[20px] bg-white text-left shadow-[0_4px_18px_rgba(27,45,34,0.06)] transition-all hover:-translate-y-1 hover:shadow-[0_12px_26px_rgba(27,45,34,0.12)] ${
                       index === 1 ? "sm:mt-8" : ""
                     }`}
                     key={item.id}
-                    onClick={() => setSelectedEquipment(item)}
+                    onClick={() => handleViewDetails(item)}
                     type="button"
                     whileInView={{ opacity: 1, y: 0 }}
                     initial={{ opacity: 0, y: 18 }}
@@ -774,51 +1268,102 @@ export default function MarketplaceHome() {
               4.9 average rating
             </div>
           </motion.div>
-          <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {reviews.map((review, index) => (
-              <motion.article
-                className="rounded-[20px] border border-[#e8ebe7] bg-white p-5 shadow-[0_3px_15px_rgba(27,45,34,0.035)] sm:p-5"
-                initial={{ opacity: 0, y: 15 }}
-                key={review.name}
-                transition={{ duration: 0.4, delay: index * 0.07 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, amount: 0.2 }}
+          {loadingReviews ? (
+            <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              {[0, 1, 2, 3].map((i) => (
+                <div
+                  key={i}
+                  className="animate-pulse rounded-[20px] border border-[#e8ebe7] bg-white p-5 shadow-[0_3px_15px_rgba(27,45,34,0.035)]"
+                >
+                  <div className="flex gap-1">
+                    {[0, 1, 2, 3, 4].map((s) => (
+                      <div key={s} className="size-3 rounded-full bg-[#eef1ed]" />
+                    ))}
+                  </div>
+                  <div className="mt-4 h-3 w-full rounded bg-[#eef1ed]" />
+                  <div className="mt-2 h-3 w-4/5 rounded bg-[#eef1ed]" />
+                  <div className="mt-2 h-3 w-3/5 rounded bg-[#eef1ed]" />
+                  <div className="mt-5 flex items-center gap-3 border-t border-[#edf0ec] pt-4">
+                    <div className="size-10 rounded-full bg-[#eef1ed]" />
+                    <div>
+                      <div className="h-3 w-20 rounded bg-[#eef1ed]" />
+                      <div className="mt-1.5 h-2.5 w-14 rounded bg-[#eef1ed]" />
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : reviewsError ? (
+            <div
+              className="mt-8 rounded-2xl border border-[#f2d5cb] bg-[#fff7f4] p-6 text-center"
+              role="alert"
+            >
+              <p className="text-sm font-semibold text-[#a14630]">
+                Unable to load customer reviews
+              </p>
+              <p className="mt-1 text-xs text-[#b85c47]">{reviewsError}</p>
+              <button
+                type="button"
+                onClick={retryReviews}
+                className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-[#14251e] px-4 py-2 text-xs font-semibold text-white transition hover:bg-[#263b31]"
               >
-                <div className="flex items-center gap-0.5" aria-label="5 out of 5 stars">
-                  {Array.from({ length: review.rating }, (_, starIndex) => (
-                    <Star
-                      aria-hidden="true"
-                      className="fill-[#f2a73b] text-[#f2a73b]"
-                      key={starIndex}
-                      size={13}
-                    />
-                  ))}
-                </div>
-                <p className="mt-4 min-h-[100px] text-[13px] leading-[1.7] text-[#66736a]">
-                  “{review.text}”
-                </p>
-                <div className="mt-5 flex items-center gap-3 border-t border-[#edf0ec] pt-4">
-                  <span className="relative size-10 overflow-hidden rounded-full bg-[#e7ece7]">
-                    <Image
-                      alt=""
-                      className="image-cover"
-                      fill
-                      sizes="40px"
-                      src={review.avatar}
-                    />
-                  </span>
-                  <span>
-                    <span className="block text-xs font-semibold text-[#22352a]">
-                      {review.name}
+                Try again
+              </button>
+            </div>
+          ) : backendReviews.length === 0 ? (
+            <div className="mt-8 rounded-2xl border border-dashed border-[#d9e0d9] bg-white p-8 text-center">
+              <p className="text-sm font-semibold text-[#23372c]">No reviews yet</p>
+              <p className="mt-1 text-xs text-[#7b867e]">
+                Customer reviews will appear here once rentals are completed.
+              </p>
+            </div>
+          ) : (
+            <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              {backendReviews.map((review, index) => (
+                <motion.article
+                  className="rounded-[20px] border border-[#e8ebe7] bg-white p-5 shadow-[0_3px_15px_rgba(27,45,34,0.035)] sm:p-5"
+                  initial={{ opacity: 0, y: 15 }}
+                  key={review._id || index}
+                  transition={{ duration: 0.4, delay: index * 0.07 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, amount: 0.2 }}
+                >
+                  <div className="flex items-center gap-0.5" aria-label={`${review.rating} out of 5 stars`}>
+                    {Array.from({ length: review.rating }, (_, starIndex) => (
+                      <Star
+                        aria-hidden="true"
+                        className="fill-[#f2a73b] text-[#f2a73b]"
+                        key={starIndex}
+                        size={13}
+                      />
+                    ))}
+                  </div>
+                  <p className="mt-4 min-h-[100px] text-[13px] leading-[1.7] text-[#66736a]">
+                    “{review.comment}”
+                  </p>
+                  <div className="mt-5 flex items-center gap-3 border-t border-[#edf0ec] pt-4">
+                    <span className="relative size-10 overflow-hidden rounded-full bg-[#e7ece7]">
+                      <Image
+                        alt=""
+                        className="image-cover"
+                        fill
+                        sizes="40px"
+                        src={review.customer?.image || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=160&q=85"}
+                      />
                     </span>
-                    <span className="mt-0.5 block text-[10px] text-[#87918a]">
-                      {review.role}
+                    <span>
+                      <span className="block text-xs font-semibold text-[#22352a]">
+                        {review.customer?.name || "Verified Customer"}
+                      </span>
+                      <span className="mt-0.5 block text-[10px] text-[#87918a]">
+                        Verified Rental
+                      </span>
                     </span>
-                  </span>
-                </div>
-              </motion.article>
-            ))}
-          </div>
+                  </div>
+                </motion.article>
+              ))}
+            </div>
+          )}
         </section>
 
         <section className="section-wrap pb-16 sm:pb-20" id="list-equipment">
@@ -867,6 +1412,8 @@ export default function MarketplaceHome() {
           <EquipmentDialog
             item={selectedEquipment}
             onClose={() => setSelectedEquipment(null)}
+            token={token}
+            user={user}
           />
         )}
       </AnimatePresence>
