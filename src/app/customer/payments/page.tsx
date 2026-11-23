@@ -62,7 +62,9 @@ export default function CustomerPaymentsPage() {
                   <td className={`${tableCellClass} font-semibold text-[#26352c]`}>
                     {formatAmount(payment.amount)}
                   </td>
-                  <td className={tableCellClass}>{payment.paymentMethod ?? "Demo payment"}</td>
+                  <td className={tableCellClass}>
+                    {payment.stripeCheckoutSessionId ? "Stripe Test Mode" : payment.paymentMethod ? `Demo · ${payment.paymentMethod}` : "Payment"}
+                  </td>
                   <td className={tableCellClass}>
                     <StatusBadge status={payment.status} />
                   </td>
@@ -74,8 +76,8 @@ export default function CustomerPaymentsPage() {
         </TableFrame>
       )}
       <p className="mt-4 rounded-xl bg-[#f7f8f6] px-4 py-3 text-xs leading-5 text-[#68756d]">
-        This is a demo payment system for assignment testing. No real money is charged,
-        and no card or mobile banking credentials are collected.
+        Demo payments are simulations and never create a Stripe transaction. Stripe Test Mode
+        transactions use Stripe Checkout test credentials and do not charge real money.
       </p>
     </>
   );

@@ -69,6 +69,8 @@ export type PaymentTransaction = {
   renterId: string;
   amount: number;
   paymentMethod?: "demo_card" | "bkash_demo" | "nagad_demo";
+  stripeCheckoutSessionId?: string;
+  stripePaymentIntentId?: string;
   currency?: string;
   status: "pending" | "success" | "failed" | "cancelled" | "refunded";
   createdAt: string;
