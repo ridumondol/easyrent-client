@@ -5,7 +5,7 @@ import PublicPageFrame from "@/components/PublicPageFrame";
 const steps = [
   { icon: Search, number: "01", title: "Find the right equipment", text: "Browse approved local listings and narrow them down by category, rental period, availability, and budget." },
   { icon: CalendarDays, number: "02", title: "Request your dates", text: "Choose your start and end dates, quantity, and delivery details. The server checks availability and calculates your rental total." },
-  { icon: ClipboardCheck, number: "03", title: "Pay securely and get to work", text: "Complete payment through Stripe Checkout. Your booking and payment status are recorded so you can follow everything from your dashboard." },
+  { icon: ClipboardCheck, number: "03", title: "Pay securely and get to work", text: "Complete the demo payment using Card, bKash Demo, or Nagad Demo. Your booking and payment status are recorded in your dashboard." },
 ];
 
 export default function HowItWorksPage() {

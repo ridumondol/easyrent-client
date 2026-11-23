@@ -35,25 +35,39 @@ function PaymentDialog({
   equipmentName,
   onClose,
   token,
+  onComplete,
 }: {
   booking: Booking;
   equipmentName: string;
   onClose: () => void;
+  onComplete: () => void;
   token: string | null;
 }) {
   const [paying, setPaying] = useState(false);
   const [error, setError] = useState("");
+  const [paymentMethod, setPaymentMethod] = useState<"demo_card" | "bkash_demo" | "nagad_demo">("demo_card");
+  const [outcome, setOutcome] = useState<"success" | "failed" | "cancelled">("success");
 
   async function startCheckout() {
     setPaying(true);
     setError("");
     try {
-      const { checkoutUrl } = await apiRequest<{ checkoutUrl: string }>("/payments/checkout", {
+      const { transaction } = await apiRequest<{ transaction: { status: string } }>("/payments/checkout", {
         method: "POST",
         token,
-        body: { bookingId: booking._id },
+        body: { bookingId: booking._id, paymentMethod, outcome },
       });
-      window.location.assign(checkoutUrl);
+
+      if (transaction.status === "success") {
+        onComplete();
+        return;
+      }
+
+      setError(
+        transaction.status === "failed"
+          ? "Demo payment failed. Your booking is still unpaid. You can try again."
+          : "Demo payment was cancelled. Your booking is still unpaid.",
+      );
     } catch (requestError) {
       setError(getErrorMessage(requestError));
     } finally {
@@ -72,7 +86,7 @@ function PaymentDialog({
         <div className="flex items-start justify-between gap-4">
           <div>
             <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#ec7047]">
-              Stripe test checkout
+              Demo payment
             </p>
             <h2 className="mt-1 text-xl font-semibold text-[#17271f]" id="payment-dialog-title">
               Complete payment
@@ -104,10 +118,37 @@ function PaymentDialog({
           </div>
         </div>
 
-        <p className="mt-5 rounded-xl bg-[#f7f8f6] p-4 text-xs leading-5 text-[#77827a]">
-          You’ll be redirected to Stripe’s hosted checkout. Use your Stripe test
-          card there; payment status is updated only after the signed webhook arrives.
-        </p>
+        <div className="mt-5 space-y-3">
+          <label className="block text-xs font-semibold text-[#536159]">
+            Payment method
+            <select
+              className="mt-1.5 w-full rounded-xl border border-[#dfe5df] bg-white px-3 py-3 text-sm font-normal text-[#26352c] outline-none focus:border-[#78917f]"
+              value={paymentMethod}
+              onChange={(event) => setPaymentMethod(event.target.value as typeof paymentMethod)}
+              disabled={paying}
+            >
+              <option value="demo_card">Demo Card</option>
+              <option value="bkash_demo">bKash Demo</option>
+              <option value="nagad_demo">Nagad Demo</option>
+            </select>
+          </label>
+          <label className="block text-xs font-semibold text-[#536159]">
+            Simulated result
+            <select
+              className="mt-1.5 w-full rounded-xl border border-[#dfe5df] bg-white px-3 py-3 text-sm font-normal text-[#26352c] outline-none focus:border-[#78917f]"
+              value={outcome}
+              onChange={(event) => setOutcome(event.target.value as typeof outcome)}
+              disabled={paying}
+            >
+              <option value="success">Successful payment</option>
+              <option value="failed">Failed payment</option>
+              <option value="cancelled">Cancelled payment</option>
+            </select>
+          </label>
+          <p className="rounded-xl bg-[#fff8e9] p-3 text-xs leading-5 text-[#85652b]">
+            Demo only: no real money or bank/card details are used.
+          </p>
+        </div>
 
         {error && (
           <p className="mt-4 rounded-xl border border-[#f2d5cb] bg-[#fff7f4] px-4 py-3 text-xs leading-5 text-[#a14630]" role="alert">
@@ -129,7 +170,7 @@ function PaymentDialog({
             onClick={() => void startCheckout()}
             type="button"
           >
-            {paying ? "Opening Stripe…" : `Continue · ${formatAmount(booking.totalAmount)}`}
+            {paying ? "Processing…" : `Run demo · ${formatAmount(booking.totalAmount)}`}
           </button>
         </div>
       </section>
@@ -308,6 +349,10 @@ export default function CustomerBookingsPage() {
             equipmentNames[payingBooking.equipmentId] ?? `Equipment ${payingBooking.equipmentId.slice(-6)}`
           }
           onClose={() => setPayingBooking(null)}
+          onComplete={() => {
+            setPayingBooking(null);
+            reload();
+          }}
           token={token}
         />
       )}

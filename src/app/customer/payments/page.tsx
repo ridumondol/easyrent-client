@@ -35,7 +35,7 @@ export default function CustomerPaymentsPage() {
         <ErrorState message={error} onRetry={reload} />
       ) : payments.length === 0 ? (
         <EmptyState
-          description="Completed and pending Stripe Checkout transactions will appear here."
+          description="Your demo payment attempts and completed booking payments appear here."
           icon={CreditCard}
           title="No payment transactions"
         />
@@ -62,7 +62,7 @@ export default function CustomerPaymentsPage() {
                   <td className={`${tableCellClass} font-semibold text-[#26352c]`}>
                     {formatAmount(payment.amount)}
                   </td>
-                  <td className={tableCellClass}>{payment.paymentMethod ?? "Stripe Checkout"}</td>
+                  <td className={tableCellClass}>{payment.paymentMethod ?? "Demo payment"}</td>
                   <td className={tableCellClass}>
                     <StatusBadge status={payment.status} />
                   </td>
@@ -74,8 +74,8 @@ export default function CustomerPaymentsPage() {
         </TableFrame>
       )}
       <p className="mt-4 rounded-xl bg-[#f7f8f6] px-4 py-3 text-xs leading-5 text-[#68756d]">
-        Payments are processed through Stripe Checkout. Use test-mode credentials
-        locally; Stripe test payments do not charge a real card.
+        This is a demo payment system for assignment testing. No real money is charged,
+        and no card or mobile banking credentials are collected.
       </p>
     </>
   );
