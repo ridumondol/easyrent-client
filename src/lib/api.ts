@@ -70,7 +70,7 @@ export type PaymentTransaction = {
   amount: number;
   paymentMethod?: "demo_card" | "bkash_demo" | "nagad_demo";
   currency?: string;
-  status: "pending" | "success" | "failed" | "cancelled";
+  status: "pending" | "success" | "failed" | "cancelled" | "refunded";
   createdAt: string;
 };
 
