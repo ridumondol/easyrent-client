@@ -11,7 +11,7 @@ export default function Brand({ light = false }: BrandProps) {
       href="/"
       aria-label="Rentora home"
       className={`inline-flex items-center gap-2.5 font-semibold tracking-tight ${
-        light ? "text-white" : "text-[#14251e]"
+        light ? "text-white" : "text-[#14251e] dark:text-[#edf2ee]"
       }`}
     >
       <span className="grid size-9 place-items-center rounded-xl bg-[#f26a3d] text-white shadow-sm">

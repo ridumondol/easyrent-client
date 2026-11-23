@@ -182,8 +182,8 @@ export default function DashboardLayout({
                   aria-current={isActive ? "page" : undefined}
                   className={`inline-flex shrink-0 items-center gap-3 rounded-xl px-3.5 py-3 text-sm font-medium transition-colors lg:flex ${
                     isActive
-                      ? "bg-[#14251e] text-white shadow-sm"
-                      : "text-[#647168] hover:bg-[#f4f6f3] hover:text-[#14251e]"
+                      ? "bg-[#14251e] dark:bg-[#244835] text-white shadow-sm border border-transparent dark:border-[#3d6a50]"
+                      : "text-[#647168] dark:text-[#a3b2a7] hover:bg-[#f4f6f3] dark:hover:bg-[#1e2c22] hover:text-[#14251e] dark:hover:text-[#edf2ee]"
                   }`}
                   href={href}
                   key={href}
@@ -195,11 +195,11 @@ export default function DashboardLayout({
             })}
           </nav>
 
-          <div className="mt-5 hidden rounded-2xl bg-[#f7f8f6] p-4 lg:mt-auto lg:block">
-            <p className="text-xs font-semibold text-[#263b31]">Need equipment?</p>
-            <p className="mt-1 text-xs leading-5 text-[#77827a]">
+          <div className="mt-5 hidden rounded-2xl bg-[#f7f8f6] dark:bg-[#131d16] p-4 lg:mt-auto lg:block border border-transparent dark:border-[#24352b]">
+            <p className="text-xs font-semibold text-[#263b31] dark:text-[#edf2ee]">Need equipment?</p>
+            <p className="mt-1 text-xs leading-5 text-[#77827a] dark:text-[#a3b2a7]">
               {role === "admin"
-                ? "Review marketplace activity and keep EasyRent running smoothly."
+                ? "Review marketplace activity and keep Rentora running smoothly."
                 : "Browse local listings and find the right gear for your next project."}
             </p>
             <Link
@@ -210,13 +210,13 @@ export default function DashboardLayout({
             </Link>
           </div>
 
-          <div className="mt-5 hidden items-center gap-3 border-t border-[#edf0ec] pt-5 lg:flex">
+          <div className="mt-5 hidden items-center gap-3 border-t border-[#edf0ec] dark:border-[#24352b] pt-5 lg:flex">
             <Link
               href={role === "owner" ? "/owner/profile" : role === "admin" ? "/admin/profile" : "/customer/profile"}
               className="group flex min-w-0 flex-1 items-center gap-3 transition-opacity hover:opacity-85"
               title="View my profile"
             >
-              <div className="relative size-10 shrink-0 overflow-hidden rounded-full border border-emerald-800/20 bg-[#eaf0eb] text-sm font-bold text-[#31513c] flex items-center justify-center">
+              <div className="relative size-10 shrink-0 overflow-hidden rounded-full border border-emerald-800/20 bg-[#eaf0eb] dark:bg-[#1e2c22] text-sm font-bold text-[#31513c] dark:text-[#86efac] flex items-center justify-center">
                 {user.image ? (
                   <Image
                     src={user.image}
@@ -231,15 +231,15 @@ export default function DashboardLayout({
                 )}
               </div>
               <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-semibold text-[#17271f] group-hover:text-emerald-800 transition-colors">
+                <p className="truncate text-sm font-semibold text-[#17271f] dark:text-[#edf2ee] group-hover:text-emerald-800 dark:group-hover:text-emerald-400 transition-colors">
                   {user.name}
                 </p>
-                <p className="truncate text-xs text-[#818c84]">{user.email}</p>
+                <p className="truncate text-xs text-[#818c84] dark:text-[#a3b2a7]">{user.email}</p>
               </div>
             </Link>
             <button
               aria-label="Sign out"
-              className="grid size-9 place-items-center rounded-full text-[#77827a] transition-colors hover:bg-[#f4f6f3] hover:text-[#14251e]"
+              className="grid size-9 place-items-center rounded-full text-[#77827a] dark:text-[#a3b2a7] transition-colors hover:bg-[#f4f6f3] dark:hover:bg-[#1e2c22] hover:text-[#14251e] dark:hover:text-[#edf2ee]"
               onClick={() => void handleLogout()}
               type="button"
             >
@@ -255,23 +255,23 @@ export default function DashboardLayout({
           ]} />
           <header className="mb-6 flex flex-wrap items-center justify-between gap-4 px-1 py-2 sm:mb-8">
             <div>
-              <p className="text-xs font-semibold text-[#879188]">
+              <p className="text-xs font-semibold text-[#879188] dark:text-[#a3b2a7]">
                 {role === "owner" ? "Owner dashboard" : role === "admin" ? "Admin dashboard" : "Customer dashboard"}
               </p>
-              <p className="mt-1 text-xl font-semibold tracking-tight text-[#17271f] sm:text-2xl">
+              <p className="mt-1 text-xl font-semibold tracking-tight text-[#17271f] dark:text-[#edf2ee] sm:text-2xl">
                 {activeLabel}
               </p>
             </div>
             <ThemeToggle />
             <Link
-              className="inline-flex items-center gap-2 rounded-full border border-[#e1e7e1] bg-white px-4 py-2.5 text-xs font-semibold text-[#34483b] transition hover:border-[#cbd6cc]"
+              className="inline-flex items-center gap-2 rounded-full border border-[#e1e7e1] dark:border-[#24352b] bg-white dark:bg-[#16221a] px-4 py-2.5 text-xs font-semibold text-[#34483b] dark:text-[#edf2ee] transition hover:border-[#cbd6cc] dark:hover:border-[#3d6a50]"
               href="/"
             >
               Marketplace <ArrowUpRight size={14} />
             </Link>
             <button
               aria-label="Sign out"
-              className="grid size-10 shrink-0 place-items-center rounded-full border border-[#e1e7e1] bg-white text-[#647168] transition hover:bg-[#f4f6f3] lg:hidden"
+              className="grid size-10 shrink-0 place-items-center rounded-full border border-[#e1e7e1] dark:border-[#24352b] bg-white dark:bg-[#16221a] text-[#647168] dark:text-[#a3b2a7] transition hover:bg-[#f4f6f3] dark:hover:bg-[#1e2c22] lg:hidden"
               onClick={() => void handleLogout()}
               type="button"
             >

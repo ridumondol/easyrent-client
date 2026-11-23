@@ -75,8 +75,8 @@ export default function Navbar() {
             <Link
               className={`min-h-11 inline-flex items-center text-sm font-medium transition-colors ${
                 pathname === link.href
-                  ? "border-b-2 border-[#c94f2d] text-[#14251e]"
-                  : "text-[#68756d] hover:text-[#14251e]"
+                  ? "border-b-2 border-[#c94f2d] text-[#14251e] dark:border-[#e2633d] dark:text-[#edf2ee]"
+                  : "text-[#68756d] hover:text-[#14251e] dark:text-[#a3b2a7] dark:hover:text-[#edf2ee]"
               }`}
               href={link.href}
               key={link.label}
@@ -93,7 +93,7 @@ export default function Navbar() {
               {/* User Identity Pill linking to profile */}
               <Link
                 href={profilePath}
-                className="group flex items-center gap-2 rounded-full border border-[#dfe5df] bg-white py-1.5 pl-1.5 pr-3 transition hover:border-[#14251e] hover:shadow-xs"
+                className="group flex items-center gap-2 rounded-full border border-[#dfe5df] dark:border-[#24352b] bg-white dark:bg-[#16221a] py-1.5 pl-1.5 pr-3 transition hover:border-[#14251e] dark:hover:border-[#3d6a50] hover:shadow-xs"
                 title="View your profile"
               >
                 <div className="relative size-7 overflow-hidden rounded-full border border-emerald-800/20 bg-emerald-100 font-bold text-xs text-emerald-900 flex items-center justify-center">
@@ -110,23 +110,23 @@ export default function Navbar() {
                     user.name.slice(0, 1).toUpperCase()
                   )}
                 </div>
-                <span className="text-xs font-semibold text-[#14251e] max-w-[100px] truncate">
+                <span className="text-xs font-semibold text-[#14251e] dark:text-[#edf2ee] max-w-[100px] truncate">
                   {user.name}
                 </span>
-                <span className="rounded-full bg-emerald-50 px-1.5 py-0.5 text-[10px] font-medium text-emerald-800 capitalize border border-emerald-200/50">
+                <span className="rounded-full bg-emerald-50 dark:bg-[#13331f] px-1.5 py-0.5 text-[10px] font-medium text-emerald-800 dark:text-[#86efac] capitalize border border-emerald-200/50 dark:border-[#1e5234]">
                   {user.role}
                 </span>
               </Link>
 
               <Link
-                className="rounded-full border border-[#dfe5df] px-3.5 py-2 text-xs font-semibold text-[#263b31] transition hover:bg-[#f2f5f2]"
+                className="rounded-full border border-[#dfe5df] dark:border-[#24352b] px-3.5 py-2 text-xs font-semibold text-[#263b31] dark:text-[#edf2ee] transition hover:bg-[#f2f5f2] dark:hover:bg-[#1e2c22]"
                 href={dashboardPath}
               >
                 Dashboard
               </Link>
               <button
                 type="button"
-                className="rounded-full bg-[#14251e] px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-[#263b31]"
+                className="rounded-full bg-[#14251e] dark:bg-[#244835] border border-transparent dark:border-[#3d6a50] px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-[#263b31] dark:hover:bg-[#2f5c44]"
                 onClick={handleLogout}
               >
                 Sign out
@@ -135,13 +135,13 @@ export default function Navbar() {
           ) : !loading ? (
             <>
               <Link
-                className="px-3 py-2 text-sm font-medium text-[#536159] transition-colors hover:text-[#14251e]"
+                className="px-3 py-2 text-sm font-medium text-[#536159] dark:text-[#a3b2a7] transition-colors hover:text-[#14251e] dark:hover:text-[#edf2ee]"
                 href="/login"
               >
                 Log in
               </Link>
               <Link
-                className="rounded-full bg-[#14251e] px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#263b31]"
+                className="rounded-full bg-[#14251e] dark:bg-[#244835] border border-transparent dark:border-[#3d6a50] px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#263b31] dark:hover:bg-[#2f5c44]"
                 href="/register"
               >
                 Get started
@@ -154,7 +154,7 @@ export default function Navbar() {
           aria-controls="mobile-navigation"
           ref={menuButtonRef}
           aria-label={menuOpen ? "Close menu" : "Open menu"}
-          className="grid size-11 place-items-center rounded-full border border-[#e2e7e2] text-[#14251e] lg:hidden"
+          className="grid size-11 place-items-center rounded-full border border-[#e2e7e2] dark:border-[#24352b] text-[#14251e] dark:text-[#edf2ee] lg:hidden"
           onClick={() => setMenuOpen((open) => !open)}
           type="button"
         >
@@ -162,12 +162,12 @@ export default function Navbar() {
         </button>
       </nav>
       {menuOpen && (
-        <div id="mobile-navigation" className="border-t border-[#e8ebe7] bg-[#f7f8f6] px-5 pb-5 pt-3 lg:hidden">
+        <div id="mobile-navigation" className="border-t border-[#e8ebe7] dark:border-[#24352b] bg-[#f7f8f6] dark:bg-[#0f1712] px-5 pb-5 pt-3 lg:hidden">
           <div className="mx-auto flex max-w-[1240px] flex-col">
             {links.map((link) => (
               <Link
-                className={`min-h-11 flex items-center border-b border-[#e8ebe7] text-base font-medium ${
-                  pathname === link.href ? "text-[#c94f2d]" : "text-[#536159]"
+                className={`min-h-11 flex items-center border-b border-[#e8ebe7] dark:border-[#24352b] text-base font-medium ${
+                  pathname === link.href ? "text-[#c94f2d] dark:text-[#f0744f]" : "text-[#536159] dark:text-[#a3b2a7]"
                 }`}
                 href={link.href}
                 key={link.label}
@@ -179,7 +179,7 @@ export default function Navbar() {
             ))}
 
             {!loading && user && (
-              <div className="my-3 flex items-center gap-3 border-b border-[#e8ebe7] pb-3">
+              <div className="my-3 flex items-center gap-3 border-b border-[#e8ebe7] dark:border-[#24352b] pb-3">
                 <div className="relative size-10 overflow-hidden rounded-full border border-emerald-800/20 bg-emerald-100 font-bold text-sm text-emerald-900 flex items-center justify-center">
                   {user.image ? (
                     <Image
@@ -195,8 +195,8 @@ export default function Navbar() {
                   )}
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-semibold text-[#14251e]">{user.name}</p>
-                  <p className="truncate text-xs text-[#68756d] capitalize">{user.role} Account</p>
+                  <p className="truncate text-sm font-semibold text-[#14251e] dark:text-[#edf2ee]">{user.name}</p>
+                  <p className="truncate text-xs text-[#68756d] dark:text-[#a3b2a7] capitalize">{user.role} Account</p>
                 </div>
               </div>
             )}
@@ -206,21 +206,21 @@ export default function Navbar() {
               {!loading && user ? (
                 <>
                   <Link
-                    className="flex-1 rounded-full border border-[#dfe5df] px-4 py-2.5 text-center text-xs font-semibold text-[#263b31]"
+                    className="flex-1 rounded-full border border-[#dfe5df] dark:border-[#24352b] px-4 py-2.5 text-center text-xs font-semibold text-[#263b31] dark:text-[#edf2ee]"
                     href={profilePath}
                     onClick={() => setMenuOpen(false)}
                   >
                     My Profile
                   </Link>
                   <Link
-                    className="flex-1 rounded-full border border-[#dfe5df] px-4 py-2.5 text-center text-xs font-semibold text-[#263b31]"
+                    className="flex-1 rounded-full border border-[#dfe5df] dark:border-[#24352b] px-4 py-2.5 text-center text-xs font-semibold text-[#263b31] dark:text-[#edf2ee]"
                     href={dashboardPath}
                     onClick={() => setMenuOpen(false)}
                   >
                     Dashboard
                   </Link>
                   <button
-                    className="w-full rounded-full bg-[#14251e] px-4 py-2.5 text-center text-xs font-semibold text-white"
+                    className="w-full rounded-full bg-[#14251e] dark:bg-[#244835] border border-transparent dark:border-[#3d6a50] px-4 py-2.5 text-center text-xs font-semibold text-white"
                     onClick={() => {
                       setMenuOpen(false);
                       void handleLogout();
@@ -233,14 +233,14 @@ export default function Navbar() {
               ) : !loading ? (
                 <>
                   <Link
-                    className="flex-1 rounded-full border border-[#dfe5df] px-4 py-2.5 text-center text-sm font-medium text-[#263b31]"
+                    className="flex-1 rounded-full border border-[#dfe5df] dark:border-[#24352b] px-4 py-2.5 text-center text-sm font-medium text-[#263b31] dark:text-[#edf2ee]"
                     href="/login"
                     onClick={() => setMenuOpen(false)}
                   >
                     Log in
                   </Link>
                   <Link
-                    className="flex-1 rounded-full bg-[#14251e] px-4 py-2.5 text-center text-sm font-semibold text-white"
+                    className="flex-1 rounded-full bg-[#14251e] dark:bg-[#244835] border border-transparent dark:border-[#3d6a50] px-4 py-2.5 text-center text-sm font-semibold text-white"
                     href="/register"
                     onClick={() => setMenuOpen(false)}
                   >
