@@ -163,7 +163,7 @@ export default function DashboardLayout({
   return (
     <div className="min-h-screen bg-[#f7f8f6]">
       <div className="mx-auto grid min-h-screen max-w-[1600px] gap-5 p-3 sm:p-5 lg:grid-cols-[250px_minmax(0,1fr)] lg:gap-8 lg:p-8">
-        <aside className="flex flex-col rounded-[26px] border border-[#e8ebe7] bg-white p-4 shadow-[0_8px_32px_rgba(27,45,34,0.035)] lg:sticky lg:top-8 lg:h-[calc(100vh-4rem)] lg:p-5">
+        <aside className="flex min-w-0 flex-col rounded-[26px] border border-[#e8ebe7] bg-white p-4 shadow-[0_8px_32px_rgba(27,45,34,0.035)] lg:sticky lg:top-8 lg:h-[calc(100vh-4rem)] lg:p-5">
           <div className="flex items-center justify-between lg:block">
             <Brand />
             <span className="rounded-full bg-[#f3f5f2] px-3 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-[#647168] lg:mt-6 lg:inline-flex">
@@ -253,7 +253,7 @@ export default function DashboardLayout({
             { label: "Dashboard", href: expectedPath },
             { label: activeLabel },
           ]} />
-          <header className="mb-6 flex items-center justify-between gap-4 px-1 py-2 sm:mb-8">
+          <header className="mb-6 flex flex-wrap items-center justify-between gap-4 px-1 py-2 sm:mb-8">
             <div>
               <p className="text-xs font-semibold text-[#879188]">
                 {role === "owner" ? "Owner dashboard" : role === "admin" ? "Admin dashboard" : "Customer dashboard"}

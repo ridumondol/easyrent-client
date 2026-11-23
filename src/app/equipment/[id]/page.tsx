@@ -251,7 +251,7 @@ export default function EquipmentDetailsPage() {
             ref={dialogRef}
             aria-labelledby="book-equipment-title"
             aria-modal="true"
-            className="my-auto w-full max-w-xl rounded-3xl bg-white p-6 shadow-2xl sm:p-8"
+            className="my-auto max-h-[calc(100dvh-2rem)] w-full max-w-xl overflow-y-auto rounded-3xl bg-white p-6 shadow-2xl sm:p-8"
             role="dialog"
           >
             <div className="flex items-start justify-between">

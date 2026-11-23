@@ -53,7 +53,7 @@ export default function GitHubSignInButton() {
 
   return (
     <button
-      className="flex w-full items-center justify-center gap-2.5 rounded-xl border border-[#dfe5df] bg-white px-4 py-3 text-sm font-medium text-[#24292f] transition hover:bg-[#f6f8fa] disabled:cursor-not-allowed disabled:opacity-60"
+      className="flex w-full items-center justify-center gap-2.5 rounded-full border border-[#dfe5df] bg-white px-4 py-3 text-sm font-medium text-[#24292f] transition hover:bg-[#f6f8fa] disabled:cursor-not-allowed disabled:opacity-60"
       disabled={loading}
       onClick={handleClick}
       type="button"

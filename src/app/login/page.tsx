@@ -70,7 +70,7 @@ export default function LoginPage() {
       </section>
 
       <section className="grid place-items-center px-5 py-12 sm:px-10">
-        <div className="w-full max-w-[420px]">
+        <div className="w-full max-w-[420px] min-w-0">
           <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-[#ec7047]">
             Welcome back
           </p>

@@ -74,6 +74,8 @@ export default function GoogleSignInButton() {
 
   useEffect(() => {
     if (!scriptReady || !clientId || !buttonRef.current || !window.google) return;
+    const buttonElement = buttonRef.current;
+
     window.google.accounts.id.initialize({
       client_id: clientId,
       callback: (response) => {
@@ -96,20 +98,37 @@ export default function GoogleSignInButton() {
           });
       },
     });
-    buttonRef.current.replaceChildren();
-    window.google.accounts.id.renderButton(buttonRef.current, {
-      theme: "outline",
-      size: "large",
-      text: "continue_with",
-      shape: "rectangular",
-      width: Math.min(420, Math.floor(buttonRef.current.clientWidth || 360)),
-    });
+
+    let renderedWidth = 0;
+    const renderGoogleButton = () => {
+      const availableWidth = Math.floor(buttonElement.getBoundingClientRect().width);
+      if (availableWidth < 120) return;
+
+      const width = Math.min(400, availableWidth);
+      if (width === renderedWidth) return;
+
+      renderedWidth = width;
+      buttonElement.replaceChildren();
+      window.google?.accounts.id.renderButton(buttonElement, {
+        theme: "outline",
+        size: "large",
+        text: "continue_with",
+        shape: "rectangular",
+        width,
+      });
+    };
+
+    renderGoogleButton();
+    const resizeObserver = new ResizeObserver(renderGoogleButton);
+    resizeObserver.observe(buttonElement);
+
+    return () => resizeObserver.disconnect();
   }, [googleLogin, router, scriptReady]);
 
   if (!clientId) {
     return (
       <button
-        className="flex w-full items-center justify-center gap-2.5 rounded-xl border border-[#dfe5df] bg-white px-4 py-3 text-sm font-medium text-[#3c4043] transition hover:bg-[#f8f9fa]"
+        className="relative mx-auto flex h-10 w-full max-w-[400px] items-center justify-center rounded-[6px] border border-[#dadce0] bg-white px-4 text-sm font-medium text-[#1f1f1f] transition-colors hover:bg-[#f8f9fa] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#4285f4]"
         onClick={() =>
           toast.error(
             "Google sign-in is not configured. Set NEXT_PUBLIC_GOOGLE_CLIENT_ID in .env.local.",
@@ -117,34 +136,34 @@ export default function GoogleSignInButton() {
         }
         type="button"
       >
-        <GoogleIcon className="shrink-0" />
-        Continue with Google
+        <GoogleIcon className="absolute left-5 shrink-0" />
+        <span>Continue with Google</span>
       </button>
     );
   }
 
   return (
-    <div className="w-full">
+    <div className="mx-auto w-full max-w-[400px]">
       <Script
         onLoad={() => setScriptReady(true)}
         src="https://accounts.google.com/gsi/client"
         strategy="afterInteractive"
       />
       {loading ? (
-        <div className="flex min-h-[44px] w-full items-center justify-center gap-2 rounded-xl border border-[#dfe5df] bg-white text-xs text-[#66736a]">
-          <span className="size-4 animate-spin rounded-full border-2 border-[#14251e] border-t-transparent" />
+        <div className="relative flex h-10 w-full items-center justify-center rounded-[6px] border border-[#dadce0] bg-white text-xs text-[#3c4043]">
+          <span className="absolute left-5 size-4 animate-spin rounded-full border-2 border-[#14251e] border-t-transparent" />
           Signing in with Google…
         </div>
       ) : (
-        <div className="flex min-h-[44px] w-full justify-center overflow-hidden rounded-xl [&>div]:w-full" ref={buttonRef}>
+        <div className="flex w-full justify-center" ref={buttonRef}>
           {!scriptReady && (
             <button
-              className="flex w-full items-center justify-center gap-2.5 rounded-xl border border-[#dfe5df] bg-white px-4 py-3 text-sm font-medium text-[#3c4043] opacity-75"
+              className="relative flex h-10 w-full items-center justify-center rounded-[6px] border border-[#dadce0] bg-white px-4 text-sm font-medium text-[#1f1f1f] opacity-75"
               disabled
               type="button"
             >
-              <GoogleIcon className="shrink-0" />
-              Continue with Google
+              <GoogleIcon className="absolute left-5 shrink-0" />
+              <span>Continue with Google</span>
             </button>
           )}
         </div>
