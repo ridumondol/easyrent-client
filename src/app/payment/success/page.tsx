@@ -85,14 +85,30 @@ export default function PaymentSuccessPage() {
           )}
           <p className="mt-5 text-xs font-bold uppercase tracking-[0.16em] text-[#4c7856]">Stripe Checkout</p>
           <h1 className="mt-2 text-3xl font-semibold tracking-tight text-[#17271f] dark:text-[#edf2ee]">
-            {loading ? "Verifying your payment…" : error ? "We couldn’t verify this payment" : paid ? "Payment confirmed" : "Payment is processing"}
+            {loading
+              ? "Verifying your payment…"
+              : error
+                ? "We couldn’t verify this payment"
+                : paid
+                  ? "Payment confirmed"
+                  : verification?.paymentStatus === "refunded"
+                    ? "Payment refunded"
+                    : verification?.stripePaymentStatus === "failed" ||
+                        verification?.stripeSessionStatus === "expired"
+                      ? "Payment not completed"
+                      : "Payment is still processing"}
           </h1>
           <p className="mt-3 text-sm leading-6 text-[#77827a] dark:text-[#a3b2a7]">
             {error || (paid
               ? "Your payment is confirmed. The owner will review your rental request next."
-              : verification?.stripePaymentStatus === "paid"
-                ? "Stripe confirms payment. Rentora is updating your booking; check your bookings shortly."
-                : "Stripe has returned you to Rentora. Your booking will update after Stripe confirms the payment." )}
+              : verification?.paymentStatus === "refunded"
+                ? "This payment was refunded and the booking is not awaiting owner confirmation."
+                : verification?.stripePaymentStatus === "failed" ||
+                    verification?.stripeSessionStatus === "expired"
+                  ? "The Checkout payment was not completed. Your booking remains unpaid; you can start a new payment from My bookings."
+                  : verification?.stripePaymentStatus === "paid"
+                    ? "Stripe reports a successful charge, but Rentora has not confirmed the booking. Do not pay again; contact support for help."
+                    : "Stripe has not confirmed a completed payment yet. The booking will remain unpaid until payment is verified." )}
           </p>
           <Link className="mt-7 inline-flex rounded-full bg-[#14251e] px-6 py-3 text-sm font-semibold text-white dark:bg-[#244835]" href="/customer/bookings">
             View my bookings

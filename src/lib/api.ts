@@ -152,6 +152,7 @@ export async function apiRequest<T>(
   try {
     response = await fetch(`${baseUrl}${path}`, {
       method,
+      cache: "no-store",
       headers: {
         ...(body !== undefined ? { "Content-Type": "application/json" } : {}),
         ...(token ? { Authorization: `Bearer ${token}` } : {}),

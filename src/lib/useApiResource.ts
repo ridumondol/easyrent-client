@@ -32,6 +32,25 @@ export function useApiResource<T>(path: string, token: string | null) {
     return () => controller.abort();
   }, [path, refreshVersion, token]);
 
+  useEffect(() => {
+    if (!token) return;
+
+    let lastRefreshAt = 0;
+    const refreshWhenVisible = () => {
+      const now = Date.now();
+      if (document.visibilityState === "visible" && now - lastRefreshAt > 1000) {
+        lastRefreshAt = now;
+        reload();
+      }
+    };
+    window.addEventListener("focus", refreshWhenVisible);
+    document.addEventListener("visibilitychange", refreshWhenVisible);
+    return () => {
+      window.removeEventListener("focus", refreshWhenVisible);
+      document.removeEventListener("visibilitychange", refreshWhenVisible);
+    };
+  }, [reload, token]);
+
   return {
     data,
     error: token ? error : "Sign in to view this information.",
