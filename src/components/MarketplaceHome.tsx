@@ -25,7 +25,7 @@ import {
   UsersRound,
   X,
 } from "lucide-react";
-import toast, { Toaster } from "react-hot-toast";
+import toast from "react-hot-toast";
 import CategoryCard from "@/components/CategoryCard";
 import EquipmentCard from "@/components/EquipmentCard";
 import SectionHeading from "@/components/SectionHeading";
@@ -672,18 +672,6 @@ export default function MarketplaceHome() {
 
   return (
     <>
-      <Toaster
-        position="bottom-center"
-        toastOptions={{
-          duration: 2800,
-          style: {
-            borderRadius: "14px",
-            background: "#14251e",
-            color: "#fff",
-            fontSize: "13px",
-          },
-        }}
-      />
       <main>
         <section
           className="section-wrap relative pb-16 pt-12 sm:pb-20 sm:pt-[72px] lg:pb-[100px] lg:pt-[82px]"

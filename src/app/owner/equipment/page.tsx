@@ -3,6 +3,7 @@
 import { useState, type FormEvent } from "react";
 import { Boxes, Pencil, Plus, Trash2, X } from "lucide-react";
 import toast from "react-hot-toast";
+import { notifications } from "@/lib/notifications";
 import { useAuth } from "@/components/auth/AuthProvider";
 import {
   EmptyState,
@@ -301,15 +302,17 @@ export default function OwnerEquipmentPage() {
   }
 
   async function deleteEquipment(item: Equipment) {
-    if (!window.confirm(`Permanently delete "${item.title}"?`)) return;
+    if (!(await notifications.confirm(`Permanently delete "${item.title}"?`))) return;
     setBusyId(item._id);
     setActionError("");
     try {
       await apiRequest(`/equipment/${item._id}`, { method: "DELETE", token });
-      toast.success("Listing deleted");
+      notifications.success("Listing deleted.");
       reload();
     } catch (requestError) {
-      setActionError(getErrorMessage(requestError));
+      const message = getErrorMessage(requestError);
+      setActionError(message);
+      notifications.error(message);
     } finally {
       setBusyId(null);
     }

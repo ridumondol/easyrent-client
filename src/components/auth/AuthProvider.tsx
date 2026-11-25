@@ -9,7 +9,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { Toaster, toast } from "react-hot-toast";
+import { notifications, AppToaster } from "@/lib/notifications";
 import { apiRequest, ApiError, type User } from "@/lib/api";
 
 type Credentials = { email: string; password: string };
@@ -109,7 +109,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setToken(result.token);
     setUser(result.user);
     setError(null);
-    toast.success("Welcome back!");
+    notifications.success("Welcome back!");
     return result.user;
   }, []);
 
@@ -122,7 +122,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setToken(result.token);
     setUser(result.user);
     setError(null);
-    toast.success("Your Rentora account is ready.");
+    notifications.success("Your Rentora account is ready.");
     return result.user;
   }, []);
 
@@ -135,7 +135,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setToken(result.token);
     setUser(result.user);
     setError(null);
-    toast.success("Signed in with Google.");
+    notifications.success("Signed in with Google.");
     return result.user;
   }, []);
 
@@ -148,7 +148,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setToken(result.token);
     setUser(result.user);
     setError(null);
-    toast.success("Signed in with GitHub.");
+    notifications.success("Signed in with GitHub.");
     return result.user;
   }, []);
 
@@ -198,7 +198,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   return (
     <AuthContext.Provider value={value}>
       {children}
-      <Toaster position="top-right" toastOptions={{ duration: 4000 }} />
+      <AppToaster />
     </AuthContext.Provider>
   );
 }

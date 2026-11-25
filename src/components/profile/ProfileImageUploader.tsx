@@ -15,6 +15,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import toast from "react-hot-toast";
+import { notifications } from "@/lib/notifications";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { apiRequest, getErrorMessage, type User } from "@/lib/api";
 
@@ -199,7 +200,7 @@ export default function ProfileImageUploader({
   };
 
   const handleRemovePhoto = async () => {
-    if (!window.confirm("Are you sure you want to remove your profile photo?")) return;
+    if (!(await notifications.confirm("Are you sure you want to remove your profile photo?"))) return;
     setRemoving(true);
     setError(null);
     try {

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { ClipboardList, Check, XCircle, CheckCircle2 } from "lucide-react";
-import toast from "react-hot-toast";
+import { notifications } from "@/lib/notifications";
 import { useAuth } from "@/components/auth/AuthProvider";
 import {
   EmptyState,
@@ -53,7 +53,7 @@ export default function OwnerRequestsPage() {
         : bookingStatus === "completed"
           ? "Mark this rental as completed?"
           : "Confirm this rental request?";
-    if (!window.confirm(confirmation)) return;
+    if (!(await notifications.confirm(confirmation))) return;
 
     setBusyId(booking._id);
     setActionError("");
@@ -63,7 +63,7 @@ export default function OwnerRequestsPage() {
         token,
         body: { bookingStatus },
       });
-      toast.success(
+      notifications.success(
         bookingStatus === "confirmed"
           ? "Booking confirmed"
           : bookingStatus === "completed"
@@ -72,7 +72,9 @@ export default function OwnerRequestsPage() {
       );
       reload();
     } catch (requestError) {
-      setActionError(getErrorMessage(requestError));
+      const message = getErrorMessage(requestError);
+      setActionError(message);
+      notifications.error(message);
     } finally {
       setBusyId(null);
     }

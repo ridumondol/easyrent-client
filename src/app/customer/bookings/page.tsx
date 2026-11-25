@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { notifications } from "@/lib/notifications";
 import { ArrowRight, CalendarRange, CreditCard, XCircle } from "lucide-react";
 import { useAuth } from "@/components/auth/AuthProvider";
 import {
@@ -53,13 +54,15 @@ export default function CustomerBookingsPage() {
       });
       window.location.assign(checkout.checkoutUrl);
     } catch (requestError) {
-      setActionError(getErrorMessage(requestError));
+      const message = getErrorMessage(requestError);
+      setActionError(message);
+      notifications.error(message);
       setBusyId(null);
     }
   }
 
   async function cancelBooking(booking: Booking) {
-    if (!window.confirm("Cancel this booking? Any paid amount is handled according to the booking's refund status.")) {
+    if (!(await notifications.confirm("Cancel this booking? Any paid amount is handled according to the booking's refund status."))) {
       return;
     }
     setBusyId(booking._id);
@@ -69,9 +72,12 @@ export default function CustomerBookingsPage() {
         method: "PATCH",
         token,
       });
+      notifications.success("Booking cancelled.");
       reload();
     } catch (requestError) {
-      setActionError(getErrorMessage(requestError));
+      const message = getErrorMessage(requestError);
+      setActionError(message);
+      notifications.error(message);
     } finally {
       setBusyId(null);
     }

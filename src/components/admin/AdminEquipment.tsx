@@ -3,6 +3,7 @@
 import { useState, type FormEvent } from "react";
 import { Boxes, Check, Pencil, Trash2, X } from "lucide-react";
 import { useAuth } from "@/components/auth/AuthProvider";
+import { notifications } from "@/lib/notifications";
 import {
   EmptyState,
   ErrorState,
@@ -276,14 +277,17 @@ export default function AdminEquipment() {
   }
 
   async function deleteEquipment(item: Equipment) {
-    if (!window.confirm(`Permanently delete “${item.title}”?`)) return;
+    if (!(await notifications.confirm(`Permanently delete "${item.title}"?`))) return;
     setBusyId(item._id);
     setActionError("");
     try {
       await apiRequest(`/equipment/${item._id}`, { method: "DELETE", token });
+      notifications.success("Equipment deleted.");
       reload();
     } catch (requestError) {
-      setActionError(getErrorMessage(requestError));
+      const message = getErrorMessage(requestError);
+      setActionError(message);
+      notifications.error(message);
     } finally {
       setBusyId(null);
     }

@@ -6,6 +6,7 @@ import { CheckCircle2, LoaderCircle } from "lucide-react";
 import { useAuth } from "@/components/auth/AuthProvider";
 import PublicPageFrame from "@/components/PublicPageFrame";
 import { apiRequest, getErrorMessage } from "@/lib/api";
+import { notifications } from "@/lib/notifications";
 
 type Verification = {
   bookingStatus: string;
@@ -47,9 +48,20 @@ export default function PaymentSuccessPage() {
           if (result.paymentStatus === "paid" || result.paymentStatus === "refunded") break;
           if (attempt < 4) await new Promise((resolve) => setTimeout(resolve, 2000));
         }
-        if (active) setVerification(result);
+        if (active) {
+          setVerification(result);
+          if (result?.paymentStatus === "paid") {
+            notifications.success("Payment confirmed successfully.");
+          } else if (result?.stripePaymentStatus === "failed") {
+            notifications.error("The Stripe payment failed.");
+          }
+        }
       } catch (requestError) {
-        if (active) setError(getErrorMessage(requestError));
+        if (active) {
+          const message = getErrorMessage(requestError);
+          setError(message);
+          notifications.error(message);
+        }
       } finally {
         if (active) setLoading(false);
       }
