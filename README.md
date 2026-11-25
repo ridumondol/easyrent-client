@@ -25,6 +25,7 @@ Rentora is a responsive equipment-rental marketplace connecting customers with l
 | `/login`, `/register` | Account access |
 | `/forgot-password`, `/reset-password` | Request and complete a password reset |
 | `/payment/success` | Stripe Checkout return |
+| `/payment/cancelled` | Cancelled Stripe Checkout return |
 | `/customer/*` | Customer dashboard |
 | `/owner/*` | Owner dashboard |
 | `/admin/*` | Admin dashboard |
@@ -47,6 +48,15 @@ Configure `.env.local` before starting:
 NEXT_PUBLIC_API_URL=http://localhost:5000/api
 NEXT_PUBLIC_GOOGLE_CLIENT_ID=your_google_oauth_client_id
 ```
+
+Stripe Checkout is created by the API after the customer selects **Pay now**.
+The client only needs the public API URL and OAuth client IDs shown above; do
+not add Stripe keys or webhook secrets to this app or to any `NEXT_PUBLIC_*`
+variable. Configure `STRIPE_SECRET_KEY=sk_test_...`,
+`STRIPE_WEBHOOK_SECRET=whsec_...`, `STRIPE_CURRENCY=bdt`, and `CLIENT_URL` in
+`rentora-server/.env` instead. See the server README for local Stripe CLI
+webhook forwarding and test card steps. The success page asks the API to
+retrieve the Checkout Session from Stripe before showing its status.
 
 > **Important**: Next.js inlines `NEXT_PUBLIC_*` variables at build time and on dev server initialization. The Next.js development server (`npm run dev`) must be restarted whenever any `NEXT_PUBLIC_*` variable is added, removed, or modified in `.env.local`.
 

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { ArrowRight, CalendarRange, CreditCard, X, XCircle } from "lucide-react";
+import { ArrowRight, CalendarRange, CreditCard, XCircle } from "lucide-react";
 import { useAuth } from "@/components/auth/AuthProvider";
 import {
   EmptyState,
@@ -30,154 +30,6 @@ type BookingList = {
   pagination: { currentPage: number; totalPages: number; totalItems: number };
 };
 
-function PaymentDialog({
-  booking,
-  equipmentName,
-  onClose,
-  token,
-  onComplete,
-}: {
-  booking: Booking;
-  equipmentName: string;
-  onClose: () => void;
-  onComplete: () => void;
-  token: string | null;
-}) {
-  const [paying, setPaying] = useState(false);
-  const [error, setError] = useState("");
-  const [paymentMethod, setPaymentMethod] = useState<"demo_card" | "bkash_demo" | "nagad_demo">("demo_card");
-  const [outcome, setOutcome] = useState<"success" | "failed" | "cancelled">("success");
-
-  async function startCheckout() {
-    setPaying(true);
-    setError("");
-    try {
-      const { transaction } = await apiRequest<{ transaction: { status: string } }>("/payments/checkout", {
-        method: "POST",
-        token,
-        body: { bookingId: booking._id, paymentMethod, outcome },
-      });
-
-      if (transaction.status === "success") {
-        onComplete();
-        return;
-      }
-
-      setError(
-        transaction.status === "failed"
-          ? "Demo payment failed. Your booking is still unpaid. You can try again."
-          : "Demo payment was cancelled. Your booking is still unpaid.",
-      );
-    } catch (requestError) {
-      setError(getErrorMessage(requestError));
-    } finally {
-      setPaying(false);
-    }
-  }
-
-  return (
-    <div className="fixed inset-0 z-50 grid place-items-center overflow-y-auto bg-[#101b15]/55 p-4 backdrop-blur-sm">
-      <section
-        aria-labelledby="payment-dialog-title"
-        aria-modal="true"
-        className="my-auto w-full max-w-md rounded-3xl bg-white p-6 shadow-2xl sm:p-7"
-        role="dialog"
-      >
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#ec7047]">
-              Demo payment
-            </p>
-            <h2 className="mt-1 text-xl font-semibold text-[#17271f]" id="payment-dialog-title">
-              Complete payment
-            </h2>
-          </div>
-          <button
-            aria-label="Close payment dialog"
-            className="grid size-9 place-items-center rounded-full bg-[#f3f5f2] text-[#647168]"
-            onClick={onClose}
-            type="button"
-          >
-            <X size={17} />
-          </button>
-        </div>
-
-        <div className="mt-5 rounded-2xl bg-[#f7f8f6] p-4 text-xs">
-          <p className="font-semibold text-[#17271f]">{equipmentName}</p>
-          <div className="mt-2 flex justify-between text-[#77827a]">
-            <span>Rental duration:</span>
-            <span>{booking.totalDays} day{booking.totalDays === 1 ? "" : "s"} ({booking.quantity} unit{booking.quantity === 1 ? "" : "s"})</span>
-          </div>
-          <div className="mt-1 flex justify-between text-[#77827a]">
-            <span>Dates:</span>
-            <span>{formatDate(booking.startDate)} – {formatDate(booking.endDate)}</span>
-          </div>
-          <div className="mt-3 flex justify-between border-t border-[#e8ebe7] pt-2 text-sm font-semibold text-[#17271f]">
-            <span>Total amount:</span>
-            <span>{formatAmount(booking.totalAmount)}</span>
-          </div>
-        </div>
-
-        <div className="mt-5 space-y-3">
-          <label className="block text-xs font-semibold text-[#536159]">
-            Payment method
-            <select
-              className="mt-1.5 w-full rounded-xl border border-[#dfe5df] bg-white px-3 py-3 text-sm font-normal text-[#26352c] outline-none focus:border-[#78917f]"
-              value={paymentMethod}
-              onChange={(event) => setPaymentMethod(event.target.value as typeof paymentMethod)}
-              disabled={paying}
-            >
-              <option value="demo_card">Demo Card</option>
-              <option value="bkash_demo">bKash Demo</option>
-              <option value="nagad_demo">Nagad Demo</option>
-            </select>
-          </label>
-          <label className="block text-xs font-semibold text-[#536159]">
-            Simulated result
-            <select
-              className="mt-1.5 w-full rounded-xl border border-[#dfe5df] bg-white px-3 py-3 text-sm font-normal text-[#26352c] outline-none focus:border-[#78917f]"
-              value={outcome}
-              onChange={(event) => setOutcome(event.target.value as typeof outcome)}
-              disabled={paying}
-            >
-              <option value="success">Successful payment</option>
-              <option value="failed">Failed payment</option>
-              <option value="cancelled">Cancelled payment</option>
-            </select>
-          </label>
-          <p className="rounded-xl bg-[#fff8e9] p-3 text-xs leading-5 text-[#85652b]">
-            Demo only: no real money or bank/card details are used.
-          </p>
-        </div>
-
-        {error && (
-          <p className="mt-4 rounded-xl border border-[#f2d5cb] bg-[#fff7f4] px-4 py-3 text-xs leading-5 text-[#a14630]" role="alert">
-            {error}
-          </p>
-        )}
-
-        <div className="mt-6 flex justify-end gap-2">
-          <button
-            className="rounded-full border border-[#dfe5df] px-4 py-2.5 text-xs font-semibold text-[#536159]"
-            onClick={onClose}
-            type="button"
-          >
-            Cancel
-          </button>
-          <button
-            className="rounded-full bg-[#14251e] px-5 py-2.5 text-xs font-semibold text-white disabled:opacity-50"
-            disabled={paying}
-            onClick={() => void startCheckout()}
-            type="button"
-          >
-            {paying ? "Processing…" : `Run demo · ${formatAmount(booking.totalAmount)}`}
-          </button>
-        </div>
-      </section>
-    </div>
-  );
-}
-
 export default function CustomerBookingsPage() {
   const { token } = useAuth();
   const [page, setPage] = useState(1);
@@ -189,7 +41,22 @@ export default function CustomerBookingsPage() {
   );
   const [busyId, setBusyId] = useState<string | null>(null);
   const [actionError, setActionError] = useState("");
-  const [payingBooking, setPayingBooking] = useState<Booking | null>(null);
+
+  async function startCheckout(booking: Booking) {
+    setBusyId(booking._id);
+    setActionError("");
+    try {
+      const checkout = await apiRequest<{ checkoutUrl: string }>("/payments/checkout", {
+        method: "POST",
+        token,
+        body: { bookingId: booking._id },
+      });
+      window.location.assign(checkout.checkoutUrl);
+    } catch (requestError) {
+      setActionError(getErrorMessage(requestError));
+      setBusyId(null);
+    }
+  }
 
   async function cancelBooking(booking: Booking) {
     if (!window.confirm("Cancel this booking? Any paid amount is handled according to the booking's refund status.")) {
@@ -304,11 +171,11 @@ export default function CustomerBookingsPage() {
                           <button
                             className="inline-flex items-center gap-1.5 rounded-full bg-[#14251e] px-3 py-1.5 text-[10px] font-bold text-white transition hover:bg-[#263b31] disabled:opacity-50"
                             disabled={busyId === booking._id}
-                            onClick={() => setPayingBooking(booking)}
+                            onClick={() => void startCheckout(booking)}
                             type="button"
                           >
                             <CreditCard size={12} />
-                            Pay now
+                            {busyId === booking._id ? "Opening…" : "Pay now"}
                           </button>
                         )}
                         {canCancel && (
@@ -342,20 +209,7 @@ export default function CustomerBookingsPage() {
         </nav>
       )}
 
-      {payingBooking && (
-        <PaymentDialog
-          booking={payingBooking}
-          equipmentName={
-            equipmentNames[payingBooking.equipmentId] ?? `Equipment ${payingBooking.equipmentId.slice(-6)}`
-          }
-          onClose={() => setPayingBooking(null)}
-          onComplete={() => {
-            setPayingBooking(null);
-            reload();
-          }}
-          token={token}
-        />
-      )}
+
     </>
   );
 }
