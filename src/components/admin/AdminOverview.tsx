@@ -7,6 +7,7 @@ import {
   CalendarDays,
   CircleDollarSign,
   ClipboardCheck,
+  RefreshCw,
   UsersRound,
 } from "lucide-react";
 import {
@@ -150,12 +151,22 @@ export default function AdminOverview() {
         eyebrow="EasyRent administration"
         title={`Welcome${user?.name ? `, ${user.name.split(" ")[0]}` : ""}.`}
         action={
-          <Link
-            className="inline-flex items-center gap-2 self-start rounded-full bg-[#14251e] px-5 py-3 text-xs font-semibold text-white transition hover:bg-[#263b31] sm:self-auto"
-            href="/admin/equipment"
-          >
-            Review equipment <ArrowRight size={14} />
-          </Link>
+          <div className="flex flex-wrap items-center gap-2 self-start sm:self-auto">
+            <button
+              className="inline-flex items-center gap-2 rounded-full border border-[#dfe5df] bg-white px-4 py-3 text-xs font-semibold text-[#34483b] transition hover:bg-[#f4f6f3] disabled:opacity-50 dark:border-[#2a382d] dark:bg-[#1a281f] dark:text-[#d3ddd5]"
+              disabled={loading}
+              onClick={reload}
+              type="button"
+            >
+              <RefreshCw size={14} className={loading ? "animate-spin" : ""} /> Refresh totals
+            </button>
+            <Link
+              className="inline-flex items-center gap-2 self-start rounded-full bg-[#14251e] px-5 py-3 text-xs font-semibold text-white transition hover:bg-[#263b31] sm:self-auto"
+              href="/admin/equipment"
+            >
+              Review equipment <ArrowRight size={14} />
+            </Link>
+          </div>
         }
       />
 

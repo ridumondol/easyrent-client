@@ -133,6 +133,54 @@ export default function OwnerRequestsPage() {
     }
   }
 
+  async function markPaid(booking: Booking) {
+    if (!token) return;
+    if (
+      !(await notifications.confirm(
+        `Mark rental payment (${formatAmount(booking.totalAmount)}) as received?`,
+      ))
+    ) {
+      return;
+    }
+    setBusyId(booking._id);
+    setActionError("");
+    mutate((prev) => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        bookings: prev.bookings.map((b) =>
+          b._id === booking._id ? { ...b, paymentStatus: "paid" } : b,
+        ),
+      };
+    });
+    try {
+      const res = await apiRequest<{ booking?: Booking }>(`/bookings/${booking._id}/status`, {
+        method: "PATCH",
+        token,
+        body: { paymentStatus: "paid" },
+      });
+      if (res?.booking) {
+        mutate((prev) => {
+          if (!prev) return prev;
+          return {
+            ...prev,
+            bookings: prev.bookings.map((b) =>
+              b._id === res.booking!._id ? { ...b, ...res.booking } : b,
+            ),
+          };
+        });
+      }
+      notifications.success("Payment marked as received.");
+    } catch (requestError) {
+      reload();
+      const message = getErrorMessage(requestError);
+      setActionError(message);
+      notifications.error(message);
+    } finally {
+      setBusyId(null);
+    }
+  }
+
   return (
     <>
       <PageIntro
@@ -251,17 +299,28 @@ export default function OwnerRequestsPage() {
                         </button>
                       </div>
                     ) : booking.bookingStatus === "confirmed" ? (
-                      <div className="flex items-center gap-2">
+                      <div className="flex flex-wrap items-center gap-1.5">
                         <button
-                          className="inline-flex items-center gap-1 rounded-full bg-[#edf3ee] px-3 py-1.5 text-[10px] font-bold text-[#31513c] transition hover:bg-[#dbe7dc] disabled:opacity-50"
+                          className="inline-flex items-center gap-1 rounded-full bg-[#edf3ee] px-2.5 py-1.5 text-[10px] font-bold text-[#31513c] transition hover:bg-[#dbe7dc] disabled:opacity-50"
                           disabled={busyId === booking._id}
                           onClick={() => void updateBooking(booking, "completed")}
                           type="button"
                         >
                           <CheckCircle2 size={12} /> Complete
                         </button>
+                        {booking.paymentStatus === "unpaid" && (
+                          <button
+                            className="inline-flex items-center gap-1 rounded-full bg-[#e9f5ec] px-2.5 py-1.5 text-[10px] font-bold text-[#276a3b] transition hover:bg-[#d5eedb] disabled:opacity-50"
+                            disabled={busyId === booking._id}
+                            onClick={() => void markPaid(booking)}
+                            type="button"
+                            title="Mark payment as received (Cash / Direct)"
+                          >
+                            <Check size={11} /> Mark paid
+                          </button>
+                        )}
                         <button
-                          className="inline-flex items-center gap-1 rounded-full border border-[#f1d8d0] px-3 py-1.5 text-[10px] font-bold text-[#ae523b] transition hover:bg-[#fff5f1] disabled:opacity-50"
+                          className="inline-flex items-center gap-1 rounded-full border border-[#f1d8d0] px-2.5 py-1.5 text-[10px] font-bold text-[#ae523b] transition hover:bg-[#fff5f1] disabled:opacity-50"
                           disabled={busyId === booking._id}
                           onClick={() => void updateBooking(booking, "cancelled")}
                           type="button"
@@ -271,15 +330,26 @@ export default function OwnerRequestsPage() {
                       </div>
                     ) : (
                       booking.paymentStatus === "unpaid" ? (
-                        <button
-                          className="inline-flex items-center gap-1 rounded-full border border-[#cbd8ce] bg-white px-3 py-1.5 text-[10px] font-bold text-[#2d4b36] shadow-sm transition hover:bg-[#eef5f0] disabled:opacity-50"
-                          disabled={busyId === booking._id}
-                          onClick={() => void syncPayment(booking)}
-                          type="button"
-                          title="Verify if Stripe payment was completed"
-                        >
-                          <RefreshCw size={11} className={busyId === booking._id ? "animate-spin" : ""} /> Sync payment
-                        </button>
+                        <div className="flex flex-wrap items-center gap-1.5">
+                          <button
+                            className="inline-flex items-center gap-1 rounded-full border border-[#cbd8ce] bg-white px-2.5 py-1.5 text-[10px] font-bold text-[#2d4b36] shadow-sm transition hover:bg-[#eef5f0] disabled:opacity-50"
+                            disabled={busyId === booking._id}
+                            onClick={() => void syncPayment(booking)}
+                            type="button"
+                            title="Verify if Stripe payment was completed"
+                          >
+                            <RefreshCw size={11} className={busyId === booking._id ? "animate-spin" : ""} /> Sync
+                          </button>
+                          <button
+                            className="inline-flex items-center gap-1 rounded-full bg-[#e9f5ec] px-2.5 py-1.5 text-[10px] font-bold text-[#276a3b] transition hover:bg-[#d5eedb] disabled:opacity-50"
+                            disabled={busyId === booking._id}
+                            onClick={() => void markPaid(booking)}
+                            type="button"
+                            title="Mark payment as received (Cash / Direct)"
+                          >
+                            <Check size={11} /> Mark paid
+                          </button>
+                        </div>
                       ) : (
                         <span className="text-[10px] text-[#a0a9a2]">—</span>
                       )
