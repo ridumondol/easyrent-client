@@ -47,11 +47,20 @@ export default function CustomerBookingsPage() {
     setBusyId(booking._id);
     setActionError("");
     try {
-      const checkout = await apiRequest<{ checkoutUrl: string }>("/payments/checkout", {
+      const checkout = await apiRequest<{ checkoutUrl?: string; paymentStatus?: string }>("/payments/checkout", {
         method: "POST",
         token,
         body: { bookingId: booking._id },
       });
+      if (checkout.paymentStatus === "paid") {
+        setBusyId(null);
+        notifications.success("Payment confirmed successfully.");
+        reload();
+        return;
+      }
+      if (!checkout.checkoutUrl) {
+        throw new Error("Checkout could not be started. Please refresh your bookings.");
+      }
       window.location.assign(checkout.checkoutUrl);
     } catch (requestError) {
       const message = getErrorMessage(requestError);
@@ -145,7 +154,8 @@ export default function CustomerBookingsPage() {
                 const canCancel =
                   booking.bookingStatus === "pending" || booking.bookingStatus === "confirmed";
                 const canPay =
-                  booking.bookingStatus === "pending" && booking.paymentStatus === "unpaid";
+                  (booking.bookingStatus === "pending" || booking.bookingStatus === "confirmed") &&
+                  booking.paymentStatus === "unpaid";
                 const eqName =
                   equipmentNames[booking.equipmentId] ?? `Equipment ${booking.equipmentId.slice(-6)}`;
 
