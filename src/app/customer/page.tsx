@@ -20,7 +20,7 @@ import {
   tableCellClass,
   tableHeadClass,
 } from "@/components/dashboard/DashboardUI";
-import { formatAmount, formatDate, type Booking, type PaymentTransaction } from "@/lib/api";
+import { BOOKING_STATUS, formatAmount, formatDate, type Booking, type PaymentTransaction } from "@/lib/api";
 import { useApiResource } from "@/lib/useApiResource";
 import { useEquipmentLabels } from "@/lib/useEquipmentLabels";
 
@@ -89,14 +89,14 @@ export default function CustomerDashboardPage() {
               icon={Clock3}
               label="Pending bookings"
               note="Waiting for an owner response"
-              value={bookings.filter((booking) => booking.bookingStatus === "pending").length}
+              value={bookings.filter((booking) => booking.bookingStatus === BOOKING_STATUS.PENDING).length}
             />
             <StatCard
               delay={0.08}
               icon={CheckCircle2}
               label="Completed"
               note="Rentals completed"
-              value={bookings.filter((booking) => booking.bookingStatus === "completed").length}
+              value={bookings.filter((booking) => booking.bookingStatus === BOOKING_STATUS.COMPLETED).length}
             />
             <StatCard
               accent

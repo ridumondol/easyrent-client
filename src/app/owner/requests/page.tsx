@@ -15,17 +15,20 @@ import {
   tableHeadClass,
 } from "@/components/dashboard/DashboardUI";
 import {
+  BOOKING_STATUS,
+  BOOKING_STATUSES,
   apiRequest,
   formatAmount,
   formatDate,
   getErrorMessage,
   type Booking,
+  type BookingStatus,
 } from "@/lib/api";
 import { useApiResource } from "@/lib/useApiResource";
 import { useEquipmentLabels } from "@/lib/useEquipmentLabels";
 
 type BookingList = { bookings: Booking[]; count: number };
-type FilterTab = "all" | "pending" | "confirmed" | "completed" | "cancelled";
+type FilterTab = "all" | BookingStatus;
 
 export default function OwnerRequestsPage() {
   const { token } = useAuth();
@@ -46,11 +49,11 @@ export default function OwnerRequestsPage() {
 
   async function updateBooking(booking: Booking, bookingStatus: Booking["bookingStatus"]) {
     const confirmation =
-      bookingStatus === "cancelled"
-        ? booking.bookingStatus === "pending"
+      bookingStatus === BOOKING_STATUS.CANCELLED
+        ? booking.bookingStatus === BOOKING_STATUS.PENDING
           ? "Reject this rental request?"
           : "Cancel this confirmed rental?"
-        : bookingStatus === "completed"
+        : bookingStatus === BOOKING_STATUS.COMPLETED
           ? booking.paymentStatus === "unpaid"
             ? "This rental is currently Unpaid. Mark this rental as completed anyway?"
             : "Mark this rental as completed?"
@@ -86,9 +89,9 @@ export default function OwnerRequestsPage() {
         });
       }
       notifications.success(
-        bookingStatus === "confirmed"
+        bookingStatus === BOOKING_STATUS.CONFIRMED
           ? "Booking confirmed"
-          : bookingStatus === "completed"
+          : bookingStatus === BOOKING_STATUS.COMPLETED
             ? "Rental completed"
             : "Booking cancelled",
       );
@@ -198,7 +201,7 @@ export default function OwnerRequestsPage() {
       )}
 
       <div className="mb-6 flex flex-wrap gap-2">
-        {(["all", "pending", "confirmed", "completed", "cancelled"] as FilterTab[]).map((tab) => {
+        {(["all", ...BOOKING_STATUSES] as FilterTab[]).map((tab) => {
           const count =
             tab === "all"
               ? bookings.length
@@ -279,7 +282,7 @@ export default function OwnerRequestsPage() {
                     <StatusBadge status={booking.paymentStatus} />
                   </td>
                   <td className={tableCellClass}>
-                    {booking.bookingStatus === "pending" ? (
+                    {booking.bookingStatus === BOOKING_STATUS.PENDING ? (
                       <div className="flex items-center gap-2">
                         <button
                           className="inline-flex items-center gap-1 rounded-full bg-[#e9f5ec] px-3 py-1.5 text-[10px] font-bold text-[#357148] transition hover:bg-[#d5eedb] disabled:opacity-50"
@@ -298,7 +301,7 @@ export default function OwnerRequestsPage() {
                           <XCircle size={12} /> Reject
                         </button>
                       </div>
-                    ) : booking.bookingStatus === "confirmed" ? (
+                    ) : booking.bookingStatus === BOOKING_STATUS.CONFIRMED ? (
                       <div className="flex flex-wrap items-center gap-1.5">
                         <button
                           className="inline-flex items-center gap-1 rounded-full bg-[#edf3ee] px-2.5 py-1.5 text-[10px] font-bold text-[#31513c] transition hover:bg-[#dbe7dc] disabled:opacity-50"

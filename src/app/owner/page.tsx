@@ -21,7 +21,7 @@ import {
   tableCellClass,
   tableHeadClass,
 } from "@/components/dashboard/DashboardUI";
-import { formatAmount, formatDate, type Booking, type Equipment } from "@/lib/api";
+import { BOOKING_STATUS, formatAmount, formatDate, type Booking, type Equipment } from "@/lib/api";
 import { useApiResource } from "@/lib/useApiResource";
 import { useEquipmentLabels } from "@/lib/useEquipmentLabels";
 
@@ -144,7 +144,7 @@ export default function OwnerDashboardPage() {
     .filter((booking) => booking.paymentStatus === "paid")
     .reduce((total, booking) => total + booking.totalAmount, 0);
   const confirmedRentalValue = bookings
-    .filter((booking) => booking.bookingStatus === "confirmed" || booking.bookingStatus === "completed")
+    .filter((booking) => booking.bookingStatus === BOOKING_STATUS.CONFIRMED || booking.bookingStatus === BOOKING_STATUS.COMPLETED)
     .reduce((total, booking) => total + booking.totalAmount, 0);
 
   const retry = () => {

@@ -31,6 +31,15 @@ export type Equipment = {
   owner?: Pick<User, "_id" | "name" | "email">;
 };
 
+export const BOOKING_STATUS = {
+  PENDING: "pending",
+  CONFIRMED: "confirmed",
+  CANCELLED: "cancelled",
+  COMPLETED: "completed",
+} as const;
+export const BOOKING_STATUSES = Object.values(BOOKING_STATUS);
+export type BookingStatus = (typeof BOOKING_STATUS)[keyof typeof BOOKING_STATUS];
+
 export type Booking = {
   _id: string;
   equipmentId: string;
@@ -45,7 +54,7 @@ export type Booking = {
   phone: string;
   address: string;
   notes?: string;
-  bookingStatus: "pending" | "confirmed" | "cancelled" | "completed";
+  bookingStatus: BookingStatus;
   paymentStatus: "unpaid" | "paid" | "refunded";
   createdAt: string;
   renter?: Pick<User, "_id" | "name" | "email">;
@@ -208,6 +217,12 @@ export async function apiRequest<T>(
 
 export function getErrorMessage(error: unknown): string {
   if (error instanceof ApiError) {
+    if (/^bookingStatus must be one of:/i.test(error.message)) {
+      return "That booking update could not be applied. Refresh the page and try again.";
+    }
+    if (/^Cannot change booking status from /i.test(error.message)) {
+      return "This booking can no longer move to that status. Refresh the page to see its current status.";
+    }
     if (error.status === 401 && /\btoken has expired\b/i.test(error.message)) {
       return "Your session has expired. Please sign in again.";
     }

@@ -12,6 +12,7 @@ import {
   PackageOpen,
 } from "lucide-react";
 import type { ReactNode } from "react";
+import { BOOKING_STATUS } from "@/lib/api";
 
 export function PageIntro({
   eyebrow,
@@ -87,18 +88,18 @@ export function StatCard({
 export function StatusBadge({ status }: { status: string }) {
   const normalized = status.toLowerCase();
   const color =
-    normalized === "paid" || normalized === "success" || normalized === "approved" || normalized === "completed" || normalized === "confirmed" || normalized === "available"
+    normalized === "paid" || normalized === "success" || normalized === "approved" || normalized === BOOKING_STATUS.COMPLETED || normalized === BOOKING_STATUS.CONFIRMED || normalized === "available"
       ? "bg-[#e9f5ec] text-[#24673a] border border-[#b9dcc2] dark:bg-[#13331f] dark:text-[#86efac] dark:border-[#1e5234]"
-      : normalized === "pending" || normalized === "unpaid"
+      : normalized === BOOKING_STATUS.PENDING || normalized === "unpaid"
         ? "bg-[#fff5e3] text-[#805b12] border border-[#f0dfaa] dark:bg-[#382409] dark:text-[#fde047] dark:border-[#593b11]"
-        : normalized === "refunded" || normalized === "cancelled" || normalized === "rejected" || normalized === "failed" || normalized === "unavailable"
+        : normalized === "refunded" || normalized === BOOKING_STATUS.CANCELLED || normalized === "rejected" || normalized === "failed" || normalized === "unavailable"
           ? "bg-[#fff0ec] text-[#9f3d2b] border border-[#f2c6bb] dark:bg-[#3c1917] dark:text-[#fca5a5] dark:border-[#6b2622]"
           : "bg-[#f0f2f0] text-[#5f6d64] border border-[#dce0dc] dark:bg-[#1e2c22] dark:text-[#a3b2a7] dark:border-[#2b3930]";
 
   const Icon =
-    normalized === "paid" || normalized === "success" || normalized === "approved" || normalized === "completed" || normalized === "confirmed" || normalized === "available"
+    normalized === "paid" || normalized === "success" || normalized === "approved" || normalized === BOOKING_STATUS.COMPLETED || normalized === BOOKING_STATUS.CONFIRMED || normalized === "available"
       ? CheckCircle2
-      : normalized === "pending" || normalized === "unpaid"
+      : normalized === BOOKING_STATUS.PENDING || normalized === "unpaid"
         ? CircleDashed
         : normalized === "refunded"
           ? RotateCcw

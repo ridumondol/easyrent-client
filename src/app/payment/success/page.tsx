@@ -5,11 +5,11 @@ import { useEffect, useState } from "react";
 import { CheckCircle2, LoaderCircle } from "lucide-react";
 import { useAuth } from "@/components/auth/AuthProvider";
 import PublicPageFrame from "@/components/PublicPageFrame";
-import { apiRequest, getErrorMessage } from "@/lib/api";
+import { apiRequest, getErrorMessage, type BookingStatus } from "@/lib/api";
 import { notifications } from "@/lib/notifications";
 
 type Verification = {
-  bookingStatus: string;
+  bookingStatus: BookingStatus;
   paymentStatus: string;
   stripeSessionStatus: string | null;
   stripePaymentStatus: string | null;

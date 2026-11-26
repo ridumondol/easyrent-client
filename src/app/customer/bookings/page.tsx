@@ -16,6 +16,7 @@ import {
   tableHeadClass,
 } from "@/components/dashboard/DashboardUI";
 import {
+  BOOKING_STATUS,
   apiRequest,
   formatAmount,
   formatDate,
@@ -84,7 +85,7 @@ export default function CustomerBookingsPage() {
       return {
         ...prev,
         bookings: prev.bookings.map((b) =>
-          b._id === booking._id ? { ...b, bookingStatus: "cancelled" } : b
+          b._id === booking._id ? { ...b, bookingStatus: BOOKING_STATUS.CANCELLED } : b
         ),
       };
     });
@@ -165,11 +166,11 @@ export default function CustomerBookingsPage() {
             <tbody>
               {bookings.map((booking) => {
                 const canCancel =
-                  booking.bookingStatus === "pending" || booking.bookingStatus === "confirmed";
+                  booking.bookingStatus === BOOKING_STATUS.PENDING || booking.bookingStatus === BOOKING_STATUS.CONFIRMED;
                 const canPay =
-                  (booking.bookingStatus === "pending" ||
-                    booking.bookingStatus === "confirmed" ||
-                    booking.bookingStatus === "completed") &&
+                  (booking.bookingStatus === BOOKING_STATUS.PENDING ||
+                    booking.bookingStatus === BOOKING_STATUS.CONFIRMED ||
+                    booking.bookingStatus === BOOKING_STATUS.COMPLETED) &&
                   booking.paymentStatus === "unpaid";
                 const eqName =
                   equipmentNames[booking.equipmentId] ?? `Equipment ${booking.equipmentId.slice(-6)}`;
