@@ -165,7 +165,7 @@ export default function AdminOverview() {
         <ErrorState message={error} onRetry={reload} />
       ) : overview ? (
         <>
-          <section aria-label="Marketplace overview" className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+          <section aria-label="Marketplace overview" className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
             <StatCard
               icon={UsersRound}
               label="Total users"
@@ -202,11 +202,18 @@ export default function AdminOverview() {
               value={overview.completedRentals}
             />
             <StatCard
-              accent
               delay={0.2}
               icon={CircleDollarSign}
+              label="Confirmed booking value"
+              note="Confirmed/completed bookings; includes unpaid"
+              value={formatAmount(overview.confirmedBookingValue)}
+            />
+            <StatCard
+              accent
+              delay={0.24}
+              icon={CircleDollarSign}
               label="Total revenue"
-              note="Paid booking value"
+              note="Successful paid bookings only"
               value={formatAmount(overview.totalRevenue)}
             />
           </section>

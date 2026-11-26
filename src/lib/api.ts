@@ -60,6 +60,7 @@ export type AdminOverview = {
   pendingEquipmentApprovals: number;
   completedRentals: number;
   totalRevenue: number;
+  confirmedBookingValue: number;
   monthlyBookings: { month: string; bookings: number }[];
 };
 
