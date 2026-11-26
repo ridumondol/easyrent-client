@@ -160,7 +160,10 @@ export default function OwnerRequestsPage() {
       const res = await apiRequest<{ booking?: Booking }>(`/bookings/${booking._id}/status`, {
         method: "PATCH",
         token,
-        body: { paymentStatus: "paid" },
+        // Include the current booking status as well. Older deployed API
+        // validators require bookingStatus even for payment-only updates.
+        // Repeating the current status is idempotent on the server.
+        body: { bookingStatus: booking.bookingStatus, paymentStatus: "paid" },
       });
       if (res?.booking) {
         mutate((prev) => {
