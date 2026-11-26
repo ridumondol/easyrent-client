@@ -2,9 +2,16 @@
 
 Rentora is a responsive equipment-rental marketplace connecting customers with local equipment owners.
 
-- **Live URL:** Not deployed yet.
+## Links
+
+- **Live site:** https://easyrent-client.vercel.app/
+- **Client repository:** https://github.com/ridumondol/easyrent-client
+- **Server repository:** https://github.com/ridumondol/easyrent-server
+
+## Tech Stack
+
 - **Client:** Next.js App Router, React, TypeScript, Tailwind CSS, HeroUI, Framer Motion
-- **API:** Express server in `../rentora-server`
+- **API:** Express server in `../rentora-server` (see the [server repository](https://github.com/ridumondol/easyrent-server))
 
 ## Features
 
@@ -173,8 +180,12 @@ npm run build
 
 ## Getting Started
 
-Run npm install to install dependencies.
-Run npm run dev to start the development server.
+Run in **Terminal: client**, working folder `rentora-client`:
+
+```powershell
+npm install
+npm run dev
+```
 
 ## Project Information
 
@@ -190,8 +201,7 @@ Rentora is an equipment rental marketplace built with Next.js and React.
 ## Installation
 
 1. Clone the repository.
-2. Run npm install.
-3. Run npm run dev.
+2. Run in **Terminal: client**, working folder `rentora-client`: `npm install`, then `npm run dev`.
 
 ## Usage
 
