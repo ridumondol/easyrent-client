@@ -148,7 +148,10 @@ export default function OwnerRequestsPage() {
               </tr>
             </thead>
             <tbody>
-              {filteredBookings.map((booking) => (
+              {filteredBookings.map((booking) => {
+                const canConfirm = booking.paymentStatus === "paid";
+
+                return (
                 <tr key={booking._id}>
                   <td className={tableCellClass}>
                     <p className="max-w-[240px] truncate font-semibold text-[#26352c]">
@@ -182,8 +185,9 @@ export default function OwnerRequestsPage() {
                       <div className="flex items-center gap-2">
                         <button
                           className="inline-flex items-center gap-1 rounded-full bg-[#e9f5ec] px-3 py-1.5 text-[10px] font-bold text-[#357148] transition hover:bg-[#d5eedb] disabled:opacity-50"
-                          disabled={busyId === booking._id}
+                          disabled={busyId === booking._id || !canConfirm}
                           onClick={() => void updateBooking(booking, "confirmed")}
+                          title={!canConfirm ? "Only paid bookings can be confirmed." : undefined}
                           type="button"
                         >
                           <Check size={12} /> Confirm
@@ -221,7 +225,8 @@ export default function OwnerRequestsPage() {
                     )}
                   </td>
                 </tr>
-              ))}
+                );
+              })}
             </tbody>
           </table>
         </TableFrame>
