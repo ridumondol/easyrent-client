@@ -190,7 +190,7 @@ export default function OwnerRequestsPage() {
                           title={!canConfirm ? "Only paid bookings can be confirmed." : undefined}
                           type="button"
                         >
-                          <Check size={12} /> Confirm
+                          <Check size={12} /> {canConfirm ? "Confirm" : "Awaiting payment"}
                         </button>
                         <button
                           className="inline-flex items-center gap-1 rounded-full bg-[#fff0ec] px-3 py-1.5 text-[10px] font-bold text-[#b74e34] transition hover:bg-[#ffe3dc] disabled:opacity-50"
