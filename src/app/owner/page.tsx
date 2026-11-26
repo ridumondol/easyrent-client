@@ -7,6 +7,7 @@ import {
   CalendarDays,
   CircleDollarSign,
   Clock3,
+  RefreshCw,
 } from "lucide-react";
 import { useAuth } from "@/components/auth/AuthProvider";
 import {
@@ -142,6 +143,9 @@ export default function OwnerDashboardPage() {
   const earnings = bookings
     .filter((booking) => booking.paymentStatus === "paid")
     .reduce((total, booking) => total + booking.totalAmount, 0);
+  const confirmedRentalValue = bookings
+    .filter((booking) => booking.bookingStatus === "confirmed" || booking.bookingStatus === "completed")
+    .reduce((total, booking) => total + booking.totalAmount, 0);
 
   const retry = () => {
     equipmentResource.reload();
@@ -154,14 +158,24 @@ export default function OwnerDashboardPage() {
       <PageIntro
         eyebrow="Your owner workspace"
         title={`Welcome${user?.name ? `, ${user.name.split(" ")[0]}` : ""}.`}
-        description="Manage your equipment, respond to rental requests, and track paid booking value."
+        description="Manage your equipment, respond to rental requests, and track confirmed booking value and payments."
         action={
-          <Link
-            className="inline-flex items-center gap-2 self-start rounded-full bg-[#14251e] px-5 py-3 text-xs font-semibold text-white transition hover:bg-[#263b31] sm:self-auto"
-            href="/owner/equipment"
-          >
-            Manage equipment <ArrowRight size={14} />
-          </Link>
+          <div className="flex flex-wrap items-center gap-2 self-start sm:self-auto">
+            <button
+              className="inline-flex items-center gap-2 rounded-full border border-[#dfe5df] bg-white px-4 py-3 text-xs font-semibold text-[#34483b] transition hover:bg-[#f4f6f3] disabled:opacity-50"
+              disabled={equipmentResource.loading || bookingsResource.loading}
+              onClick={retry}
+              type="button"
+            >
+              <RefreshCw size={14} /> Refresh totals
+            </button>
+            <Link
+              className="inline-flex items-center gap-2 rounded-full bg-[#14251e] px-5 py-3 text-xs font-semibold text-white transition hover:bg-[#263b31]"
+              href="/owner/equipment"
+            >
+              Manage equipment <ArrowRight size={14} />
+            </Link>
+          </div>
         }
       />
 
@@ -171,7 +185,7 @@ export default function OwnerDashboardPage() {
         <ErrorState message={error} onRetry={retry} />
       ) : (
         <>
-          <section aria-label="Owner overview" className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          <section aria-label="Owner overview" className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
             <StatCard
               icon={Boxes}
               label="Total equipment"
@@ -194,8 +208,15 @@ export default function OwnerDashboardPage() {
               value={bookings.length}
             />
             <StatCard
-              accent
               delay={0.12}
+              icon={CircleDollarSign}
+              label="Confirmed rental value"
+              note="Confirmed/completed bookings; includes unpaid"
+              value={formatAmount(confirmedRentalValue)}
+            />
+            <StatCard
+              accent
+              delay={0.16}
               icon={CircleDollarSign}
               label="Paid rental value"
               note="Based on currently paid bookings"
