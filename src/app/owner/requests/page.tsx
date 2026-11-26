@@ -157,7 +157,7 @@ export default function OwnerRequestsPage() {
       const res = await apiRequest<{ booking?: Booking }>(`/bookings/${booking._id}/status`, {
         method: "PATCH",
         token,
-        body: { paymentStatus: "paid" },
+        body: { bookingStatus: booking.bookingStatus, paymentStatus: "paid" },
       });
       if (res?.booking) {
         mutate((prev) => {
