@@ -233,7 +233,7 @@ function EquipmentEditor({
 
 export default function AdminEquipment() {
   const { token } = useAuth();
-  const { data, error, loading, reload } = useApiResource<EquipmentResponse>("/admin/equipment", token);
+  const { data, error, loading, reload, mutate } = useApiResource<EquipmentResponse>("/admin/equipment", token);
   const [editing, setEditing] = useState<Equipment | null>(null);
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState("");
@@ -262,6 +262,15 @@ export default function AdminEquipment() {
   async function setApproval(item: Equipment, approvalStatus: "approved" | "rejected") {
     setBusyId(item._id);
     setActionError("");
+    mutate((prev) => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        equipment: prev.equipment.map((e) =>
+          e._id === item._id ? { ...e, approvalStatus } : e
+        ),
+      };
+    });
     try {
       await apiRequest(`/equipment/${item._id}/approval`, {
         method: "PATCH",
@@ -270,6 +279,7 @@ export default function AdminEquipment() {
       });
       reload();
     } catch (requestError) {
+      reload();
       setActionError(getErrorMessage(requestError));
     } finally {
       setBusyId(null);

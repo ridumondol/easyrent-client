@@ -34,7 +34,10 @@ type BookingList = {
 export default function CustomerBookingsPage() {
   const { token } = useAuth();
   const [page, setPage] = useState(1);
-  const { data, error, loading, reload } = useApiResource<BookingList>(`/bookings/my?page=${page}&limit=10`, token);
+  const { data, error, loading, reload, mutate } = useApiResource<BookingList>(
+    `/bookings/my?page=${page}&limit=10`,
+    token,
+  );
   const bookings = data?.bookings ?? [];
   const { labels: equipmentNames, error: equipmentError } = useEquipmentLabels(
     bookings.map((booking) => booking.equipmentId),
@@ -76,6 +79,15 @@ export default function CustomerBookingsPage() {
     }
     setBusyId(booking._id);
     setActionError("");
+    mutate((prev) => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        bookings: prev.bookings.map((b) =>
+          b._id === booking._id ? { ...b, bookingStatus: "cancelled" } : b
+        ),
+      };
+    });
     try {
       await apiRequest(`/bookings/${booking._id}/cancel`, {
         method: "PATCH",
@@ -84,6 +96,7 @@ export default function CustomerBookingsPage() {
       notifications.success("Booking cancelled.");
       reload();
     } catch (requestError) {
+      reload();
       const message = getErrorMessage(requestError);
       setActionError(message);
       notifications.error(message);
@@ -154,7 +167,9 @@ export default function CustomerBookingsPage() {
                 const canCancel =
                   booking.bookingStatus === "pending" || booking.bookingStatus === "confirmed";
                 const canPay =
-                  (booking.bookingStatus === "pending" || booking.bookingStatus === "confirmed") &&
+                  (booking.bookingStatus === "pending" ||
+                    booking.bookingStatus === "confirmed" ||
+                    booking.bookingStatus === "completed") &&
                   booking.paymentStatus === "unpaid";
                 const eqName =
                   equipmentNames[booking.equipmentId] ?? `Equipment ${booking.equipmentId.slice(-6)}`;

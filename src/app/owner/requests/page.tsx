@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ClipboardList, Check, XCircle, CheckCircle2 } from "lucide-react";
+import { ClipboardList, Check, XCircle, CheckCircle2, RefreshCw } from "lucide-react";
 import { notifications } from "@/lib/notifications";
 import { useAuth } from "@/components/auth/AuthProvider";
 import {
@@ -29,7 +29,7 @@ type FilterTab = "all" | "pending" | "confirmed" | "completed" | "cancelled";
 
 export default function OwnerRequestsPage() {
   const { token } = useAuth();
-  const { data, error, loading, reload } = useApiResource<BookingList>("/bookings/owner", token);
+  const { data, error, loading, reload, mutate } = useApiResource<BookingList>("/bookings/owner", token);
   const bookings = data?.bookings ?? [];
   const { labels: equipmentNames, error: equipmentError } = useEquipmentLabels(
     bookings.map((booking) => booking.equipmentId),
@@ -51,18 +51,40 @@ export default function OwnerRequestsPage() {
           ? "Reject this rental request?"
           : "Cancel this confirmed rental?"
         : bookingStatus === "completed"
-          ? "Mark this rental as completed?"
+          ? booking.paymentStatus === "unpaid"
+            ? "This rental is currently Unpaid. Mark this rental as completed anyway?"
+            : "Mark this rental as completed?"
           : "Confirm this rental request?";
     if (!(await notifications.confirm(confirmation))) return;
 
     setBusyId(booking._id);
     setActionError("");
+    mutate((prev) => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        bookings: prev.bookings.map((b) =>
+          b._id === booking._id ? { ...b, bookingStatus } : b
+        ),
+      };
+    });
     try {
-      await apiRequest(`/bookings/${booking._id}/status`, {
+      const res = await apiRequest<{ booking?: Booking }>(`/bookings/${booking._id}/status`, {
         method: "PATCH",
         token,
         body: { bookingStatus },
       });
+      if (res?.booking) {
+        mutate((prev) => {
+          if (!prev) return prev;
+          return {
+            ...prev,
+            bookings: prev.bookings.map((b) =>
+              b._id === res.booking!._id ? { ...b, ...res.booking } : b
+            ),
+          };
+        });
+      }
       notifications.success(
         bookingStatus === "confirmed"
           ? "Booking confirmed"
@@ -70,7 +92,38 @@ export default function OwnerRequestsPage() {
             ? "Rental completed"
             : "Booking cancelled",
       );
+    } catch (requestError) {
       reload();
+      const message = getErrorMessage(requestError);
+      setActionError(message);
+      notifications.error(message);
+    } finally {
+      setBusyId(null);
+    }
+  }
+
+  async function syncPayment(booking: Booking) {
+    if (!token) return;
+    setBusyId(booking._id);
+    setActionError("");
+    try {
+      const res = await apiRequest<{ paymentStatus: Booking["paymentStatus"] }>(`/payments/verify/${booking._id}`, { token });
+      if (res?.paymentStatus) {
+        mutate((prev) => {
+          if (!prev) return prev;
+          return {
+            ...prev,
+            bookings: prev.bookings.map((b) =>
+              b._id === booking._id ? { ...b, paymentStatus: res.paymentStatus } : b
+            ),
+          };
+        });
+      }
+      if (res.paymentStatus === "paid") {
+        notifications.success("Payment verified and marked as paid.");
+      } else {
+        notifications.info(`Payment status is: ${res.paymentStatus}`);
+      }
     } catch (requestError) {
       const message = getErrorMessage(requestError);
       setActionError(message);
@@ -217,7 +270,19 @@ export default function OwnerRequestsPage() {
                         </button>
                       </div>
                     ) : (
-                      <span className="text-[10px] text-[#a0a9a2]">—</span>
+                      booking.paymentStatus === "unpaid" ? (
+                        <button
+                          className="inline-flex items-center gap-1 rounded-full border border-[#cbd8ce] bg-white px-3 py-1.5 text-[10px] font-bold text-[#2d4b36] shadow-sm transition hover:bg-[#eef5f0] disabled:opacity-50"
+                          disabled={busyId === booking._id}
+                          onClick={() => void syncPayment(booking)}
+                          type="button"
+                          title="Verify if Stripe payment was completed"
+                        >
+                          <RefreshCw size={11} className={busyId === booking._id ? "animate-spin" : ""} /> Sync payment
+                        </button>
+                      ) : (
+                        <span className="text-[10px] text-[#a0a9a2]">—</span>
+                      )
                     )}
                   </td>
                 </tr>
